@@ -1,0 +1,18 @@
+[package]
+name = "greenback"
+version = "1.0.0"
+authors = ["Arogundade Ibrahim"]
+
+[addresses]
+greenback = "_"
+creator = "0x24578f5a0edeb93cdbaed43d11b08ec5eecddb67d94e8e939b88d2124fd2908f"
+
+[dev-addresses]
+greenback = "0x1111"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]

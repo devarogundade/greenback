@@ -1,0 +1,25 @@
+@import './base.css';
+
+@font-face {
+    font-family: 'Axiforma';
+    src: url('/fonts/Axiforma-Regular.ttf');
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: 'Axiforma SemiBold';
+    src: url('/fonts/Axiforma-SemiBold.ttf');
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: 'Axiforma Bold';
+    src: url('/fonts/Axiforma-Bold.ttf');
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: 'Axiforma ExtraBold';
+    src: url('/fonts/Axiforma-ExtraBold.ttf');
+    font-weight: 700;
+}
