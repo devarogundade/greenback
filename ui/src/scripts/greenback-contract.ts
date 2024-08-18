@@ -4,31 +4,27 @@ import {
     Aptos,
     AptosConfig,
     Ed25519PrivateKey,
+    KeylessAccount,
     Network,
 } from "@aptos-labs/ts-sdk";
-import { CONTRACT_ID } from "./constants";
+import { testnetClient, VITE_CONTRACT_ID } from "./constants";
 
 const config = new AptosConfig({ network: Network.TESTNET });
 const aptos = new Aptos(config);
 
-export async function createUser(
-    privateKey: Uint8Array
-): Promise<string | null> {
-    const signer = Account.fromPrivateKey(
-        { privateKey: new Ed25519PrivateKey(privateKey) }
-    );
-
+export async function createUser(keylessAccount: KeylessAccount): Promise<string | null> {
     try {
         const transaction = await aptos.transaction.build.simple({
-            sender: signer.accountAddress,
+            sender: keylessAccount.accountAddress,
             data: {
-                function: `${CONTRACT_ID}::greenback::create_user`,
+                function: `${VITE_CONTRACT_ID}::greenback::create_user`,
                 functionArguments: []
             },
         });
 
         const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
-            signer, transaction
+            signer: keylessAccount,
+            transaction
         });
 
         return tx_hash;
@@ -39,18 +35,14 @@ export async function createUser(
 }
 
 export async function claimEarnings(
-    privateKey: Uint8Array,
+    keylessAccount: KeylessAccount,
     amount: string
 ): Promise<string | null> {
-    const signer = Account.fromPrivateKey(
-        { privateKey: new Ed25519PrivateKey(privateKey) }
-    );
-
     try {
         const transaction = await aptos.transaction.build.simple({
-            sender: signer.accountAddress,
+            sender: keylessAccount.accountAddress,
             data: {
-                function: `${CONTRACT_ID}::greenback::claim_earnings`,
+                function: `${VITE_CONTRACT_ID}::greenback::claim_earnings`,
                 functionArguments: [
                     amount
                 ]
@@ -58,7 +50,8 @@ export async function claimEarnings(
         });
 
         const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
-            signer, transaction
+            signer: keylessAccount,
+            transaction
         });
 
         return tx_hash;
@@ -70,19 +63,15 @@ export async function claimEarnings(
 
 
 export async function mintCoupon(
-    privateKey: Uint8Array,
+    keylessAccount: KeylessAccount,
     couponId: number,
     amount: number
 ): Promise<string | null> {
-    const signer = Account.fromPrivateKey(
-        { privateKey: new Ed25519PrivateKey(privateKey) }
-    );
-
     try {
         const transaction = await aptos.transaction.build.simple({
-            sender: signer.accountAddress,
+            sender: keylessAccount.accountAddress,
             data: {
-                function: `${CONTRACT_ID}::greenback::mint_coupon`,
+                function: `${VITE_CONTRACT_ID}::greenback::mint_coupon`,
                 functionArguments: [
                     couponId,
                     amount
@@ -91,7 +80,8 @@ export async function mintCoupon(
         });
 
         const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
-            signer, transaction
+            signer: keylessAccount,
+            transaction
         });
 
         return tx_hash;
@@ -102,7 +92,7 @@ export async function mintCoupon(
 }
 
 export async function createProposal(
-    privateKey: Uint8Array,
+    keylessAccount: KeylessAccount,
     daoAddress: string,
     title: string,
     description: string,
@@ -110,17 +100,13 @@ export async function createProposal(
     proposed_amount: number,
     start_time_sec: number
 ): Promise<string | null> {
-    const signer = Account.fromPrivateKey(
-        { privateKey: new Ed25519PrivateKey(privateKey) }
-    );
-
     const daoAccountAddress = AccountAddress.fromString(daoAddress);
 
     try {
         const transaction = await aptos.transaction.build.simple({
-            sender: signer.accountAddress,
+            sender: keylessAccount.accountAddress,
             data: {
-                function: `${CONTRACT_ID}::donation_dao::create_proposal`,
+                function: `${VITE_CONTRACT_ID}::donation_dao::create_proposal`,
                 functionArguments: [
                     daoAccountAddress,
                     title,
@@ -133,7 +119,8 @@ export async function createProposal(
         });
 
         const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
-            signer, transaction
+            signer: keylessAccount,
+            transaction
         });
 
         return tx_hash;
@@ -144,22 +131,18 @@ export async function createProposal(
 }
 
 export async function vote(
-    privateKey: Uint8Array,
+    keylessAccount: KeylessAccount,
     daoAddress: string,
     proposalId: number,
     vote: boolean
 ): Promise<string | null> {
-    const signer = Account.fromPrivateKey(
-        { privateKey: new Ed25519PrivateKey(privateKey) }
-    );
-
     const daoAccountAddress = AccountAddress.fromString(daoAddress);
 
     try {
         const transaction = await aptos.transaction.build.simple({
-            sender: signer.accountAddress,
+            sender: keylessAccount.accountAddress,
             data: {
-                function: `${CONTRACT_ID}::donation_dao::vote`,
+                function: `${VITE_CONTRACT_ID}::donation_dao::vote`,
                 functionArguments: [
                     daoAccountAddress,
                     proposalId,
@@ -169,7 +152,8 @@ export async function vote(
         });
 
         const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
-            signer, transaction
+            signer: keylessAccount,
+            transaction
         });
 
         return tx_hash;
@@ -180,21 +164,17 @@ export async function vote(
 }
 
 export async function donate(
-    privateKey: Uint8Array,
+    keylessAccount: KeylessAccount,
     daoAddress: string,
     amount: number
 ): Promise<string | null> {
-    const signer = Account.fromPrivateKey(
-        { privateKey: new Ed25519PrivateKey(privateKey) }
-    );
-
     const daoAccountAddress = AccountAddress.fromString(daoAddress);
 
     try {
         const transaction = await aptos.transaction.build.simple({
-            sender: signer.accountAddress,
+            sender: keylessAccount.accountAddress,
             data: {
-                function: `${CONTRACT_ID}::donation_dao::donate`,
+                function: `${VITE_CONTRACT_ID}::donation_dao::donate`,
                 functionArguments: [
                     daoAccountAddress,
                     amount
@@ -203,10 +183,27 @@ export async function donate(
         });
 
         const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
-            signer, transaction
+            signer: keylessAccount,
+            transaction
         });
 
         return tx_hash;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}
+
+export async function getUserAccount(address: AccountAddress): Promise<any> {
+    try {
+        const userResponse = (await testnetClient.view({
+            payload: {
+                function: `${VITE_CONTRACT_ID}::greenback::get_user`,
+                functionArguments: [address]
+            },
+        }));
+
+        return userResponse[0];
     } catch (error) {
         console.log(error);
         return null;

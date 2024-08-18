@@ -20,7 +20,7 @@ interface KeylessAccountsState {
         idToken: { decoded: EncryptedScopedIdToken; raw: string; };
         pepper: Uint8Array;
     }[];
-    activeAccount?: KeylessAccount;
+    keylessAccount?: KeylessAccount;
     ephemeralKeyPair?: EphemeralKeyPair;
 }
 
@@ -70,7 +70,7 @@ export const useKeylessAccounts = create<
                     set({ ephemeralKeyPair: keyPair });
                 },
 
-                disconnectKeylessAccount: () => set({ activeAccount: undefined }),
+                disconnectKeylessAccount: () => set({ keylessAccount: undefined }),
 
                 getEphemeralKeyPair: () => {
                     const account = get().ephemeralKeyPair;
@@ -78,7 +78,7 @@ export const useKeylessAccounts = create<
                 },
 
                 switchKeylessAccount: async (idToken: string) => {
-                    set({ ...get(), activeAccount: undefined }, true);
+                    set({ ...get(), keylessAccount: undefined }, true);
 
                     // If the idToken is invalid, return undefined
                     const decodedToken = validateIdToken(idToken);
@@ -112,9 +112,9 @@ export const useKeylessAccounts = create<
                     const storedAccount = get().accounts.find(
                         (a) => a.idToken.decoded.sub === decodedToken.sub
                     );
-                    let activeAccount: KeylessAccount | undefined;
+                    let keylessAccount: KeylessAccount | undefined;
                     try {
-                        activeAccount = await testnetClient.deriveKeylessAccount({
+                        keylessAccount = await testnetClient.deriveKeylessAccount({
                             ephemeralKeyPair,
                             jwt: idToken,
                             proofFetchCallback,
@@ -122,7 +122,7 @@ export const useKeylessAccounts = create<
                     } catch (error) {
                         // If we cannot derive an account using the pepper service, attempt to derive it using the stored pepper
                         if (!storedAccount?.pepper) throw error;
-                        activeAccount = await testnetClient.deriveKeylessAccount({
+                        keylessAccount = await testnetClient.deriveKeylessAccount({
                             ephemeralKeyPair,
                             jwt: idToken,
                             pepper: storedAccount.pepper,
@@ -131,7 +131,7 @@ export const useKeylessAccounts = create<
                     }
 
                     // Store the account and set it as the active account
-                    const { pepper } = activeAccount;
+                    const { pepper } = keylessAccount;
                     set({
                         accounts: storedAccount
                             ? // If the account already exists, update it. Otherwise, append it.
@@ -147,10 +147,10 @@ export const useKeylessAccounts = create<
                                 ...get().accounts,
                                 { idToken: { decoded: decodedToken, raw: idToken }, pepper },
                             ],
-                        activeAccount,
+                        keylessAccount,
                     });
 
-                    return activeAccount;
+                    return keylessAccount;
                 },
             } satisfies KeylessAccountsActions),
         }),
@@ -159,18 +159,18 @@ export const useKeylessAccounts = create<
                 const merged = { ...currentState, ...(persistedState as object) };
                 return {
                     ...merged,
-                    activeAccount:
-                        merged.activeAccount &&
-                        validateKeylessAccount(merged.activeAccount),
+                    keylessAccount:
+                        merged.keylessAccount &&
+                        validateKeylessAccount(merged.keylessAccount),
                     ephemeralKeyPair:
                         merged.ephemeralKeyPair &&
                         validateEphemeralKeyPair(merged.ephemeralKeyPair),
                 };
             },
             name: LocalStorageKeys.keylessAccounts,
-            partialize: ({ activeAccount, ephemeralKeyPair, ...state }) => ({
+            partialize: ({ keylessAccount, ephemeralKeyPair, ...state }) => ({
                 ...state,
-                activeAccount: activeAccount && validateKeylessAccount(activeAccount),
+                keylessAccount: keylessAccount && validateKeylessAccount(keylessAccount),
                 ephemeralKeyPair:
                     ephemeralKeyPair && validateEphemeralKeyPair(ephemeralKeyPair),
             }),

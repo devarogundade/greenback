@@ -3,9 +3,18 @@ import Button from '@/components/buttons/Button.vue';
 import SideBar from '@/components/SideBar.vue';
 import useEphemeralKeyPair from "@/scripts/useEphemeralKeyPair";
 import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { watch } from 'vue';
+import { useUserStore } from '@/stores/user-store';
+import { getAccountAPTAmount, fundAccount } from '@/scripts/aptos-utils';
+import { MIN_FAUCET_AMOUNT, FAUCET_AMOUNT } from '@/scripts/constants';
+import { createUser, getUserAccount } from '@/scripts/greenback-contract';
+import { AccountAddress, KeylessAccount } from "@aptos-labs/ts-sdk";
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
+
+const toast = useToast({ duration: 4000, position: 'top', dismissible: true });
 
 const ephemeralKeyPair = useEphemeralKeyPair();
-
 const redirectUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
 
 const searchParams = new URLSearchParams({
@@ -18,7 +27,56 @@ const searchParams = new URLSearchParams({
 
 redirectUrl.search = searchParams.toString();
 
-const activeAccount = useKeylessAccounts().activeAccount;
+const keylessAccount = useKeylessAccounts().keylessAccount;
+
+const getAPTAmount = async (address: AccountAddress) => {
+    const apt_balance = await getAccountAPTAmount(address);
+
+    useUserStore.setState({ apt_balance });
+
+    if (apt_balance && apt_balance > MIN_FAUCET_AMOUNT) {
+        toast.info('Faucet: skipped funding, you have sufficient APT.');
+        return;
+    };
+
+    const tx_hash = await fundAccount(address, FAUCET_AMOUNT);
+
+    if (tx_hash) {
+        getAPTAmount(address);
+        toast.success('Faucet: your account has been funded with APT.');
+    } else {
+        toast.error('Faucet: failed to fund your account with APT.');
+    }
+};
+
+const getUser = async (keylessAccount: KeylessAccount) => {
+    const user = await getUserAccount(keylessAccount.accountAddress);
+
+    if (user) {
+        useUserStore.setState({ unclaimed_earnings: 0 });
+        useUserStore.setState({ withdrawn_earnings: 0 });
+        useUserStore.setState({ donated_earnings: 0 });
+        useUserStore.setState({ card_id: undefined });
+        return;
+    }
+
+    const tx_hash = await createUser(keylessAccount);
+
+    if (tx_hash) {
+        toast.error('Your greenback account has been created.');
+        getUser(keylessAccount);
+    } else {
+        toast.error('Failed: to create your greenback account.');
+    }
+};
+
+watch(useKeylessAccounts().accounts, async () => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+
+    getUser(keylessAccount);
+    getAPTAmount(keylessAccount.accountAddress);
+});
 </script>
 
 <template>
@@ -27,7 +85,7 @@ const activeAccount = useKeylessAccounts().activeAccount;
             <div class="app">
                 <SideBar class="sidebar" />
                 <div></div>
-                <div class="sandbox" v-if="activeAccount?.accountAddress">
+                <div class="sandbox" v-if="keylessAccount?.accountAddress">
                     <RouterView />
                 </div>
                 <div class="login" v-else>

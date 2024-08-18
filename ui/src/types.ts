@@ -18,6 +18,26 @@ export type GNFT = {
     image: string;
 };
 
+export enum DisposeChannel {
+    RFID,
+    QrScan
+}
+
+export type Paged<T> = {
+    total: number,
+    lastPage: number;
+    data?: T;
+};
+
+export type Activity = {
+    user_address: string;
+    weight_in_gram: number;
+    channel: DisposeChannel;
+    reward_amount: number;
+    tx_hash: string;
+    created_at: Date;
+};
+
 // Copyright © Aptos
 // SPDX-License-Identifier: Apache-2.0
 

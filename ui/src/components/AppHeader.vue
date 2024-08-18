@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Button from '@/components/buttons/Button.vue';
 import LogoIcon from '@/components/icons/LogoIcon.vue';
+import CopyIcon from '@/components/icons/CopyIcon.vue';
 import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
 import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
 import useEphemeralKeyPair from "@/scripts/useEphemeralKeyPair";
@@ -20,7 +21,7 @@ const searchParams = new URLSearchParams({
 
 redirectUrl.search = searchParams.toString();
 
-const activeAccount = useKeylessAccounts().activeAccount;
+const keylessAccount = useKeylessAccounts().keylessAccount;
 </script>
 
 <template>
@@ -66,7 +67,11 @@ const activeAccount = useKeylessAccounts().activeAccount;
                             <p>Achievements</p>
                         </button>
                     </RouterLink>
-                    <Button v-if="activeAccount" :text="collapseAddress(activeAccount?.accountAddress.toString())" />
+
+                    <Button v-if="keylessAccount"
+                        :text="`${collapseAddress(keylessAccount?.accountAddress.toString())}`">
+                        <CopyIcon />
+                    </Button>
 
                     <a :href="redirectUrl.toString()" v-else>
                         <Button :text="'Connect'" />
