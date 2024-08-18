@@ -1,4 +1,4 @@
-module greenback::donation_dao {
+module greenback::dao {
     // ============== Imports ============== //
 
     use std::option::{Self, Option};
@@ -16,9 +16,9 @@ module greenback::donation_dao {
     use std::bcs;
     use aptos_framework::timestamp;
 
-    use greenback::donation_dao_events;
-    use greenback::greenback::{get_voting_power, on_donate};
-    use greenback::assets::{claim_fungible_asset};
+    use greenback::main::{get_voting_power, on_donate};
+    use greenback::assets::{transfer_fungible_asset};
+    use greenback::events;
 
     // ============== Errors ============== //
 
@@ -135,7 +135,7 @@ module greenback::donation_dao {
 
         let dao_address = signer::address_of(&res_signer);
 
-        donation_dao_events::emit_create_dao_event(
+        events::emit_create_dao_event(
             dao_address,
             name,
             threshold,
@@ -190,7 +190,7 @@ module greenback::donation_dao {
         table::add(&mut proposal_store.proposals, proposal_id, proposal);
         dao.next_proposal_id = proposal_id;
 
-        donation_dao_events::emit_create_proposal_event(
+        events::emit_create_proposal_event(
             sender_address,
             dao_address,
             proposal_id,
@@ -250,7 +250,7 @@ module greenback::donation_dao {
             table::add(&mut stats.no_votes, voter_address, voting_power);
         };
 
-        donation_dao_events::emit_voting_event(
+        events::emit_voting_event(
             voter_address,
             dao_address,
             proposal_id,
@@ -290,7 +290,7 @@ module greenback::donation_dao {
         dao.available_amount = dao.available_amount + amount;
 
         // Emit event
-        donation_dao_events::emit_donate_to_dao_event(
+        events::emit_donate_to_dao_event(
             dao_address,
             sender_address,
             amount
@@ -314,7 +314,7 @@ module greenback::donation_dao {
         assert!(proposal.resolution == PROPOSAL_PENDING, error::invalid_argument(E_PROPOSAL_RESOLVED));
         resolve_internal(option::some(resolver), proposal_id, dao_address);
 
-        donation_dao_events::emit_admin_resolve_event(
+        events::emit_admin_resolve_event(
             proposal_id,
             signer::address_of(admin),
             dao_address,
@@ -366,7 +366,7 @@ module greenback::donation_dao {
             proposal.resolution = PROPOSAL_RESOLVED_NOT_PASSED;
         };
 
-        donation_dao_events::emit_resolve_event(
+        events::emit_resolve_event(
             proposal_id,
             dao_address,
             proposal.resolution,
@@ -382,7 +382,7 @@ module greenback::donation_dao {
         let fa_obj_constructor_ref = &object::create_object(dao.admin);
         let admin_store = fungible_asset::create_store(fa_obj_constructor_ref, dao.gcoin);
 
-        claim_fungible_asset(
+        transfer_fungible_asset(
             admin_store,
             dao.gcoin,
             proposal.proposed_amount

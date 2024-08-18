@@ -1,11 +1,11 @@
-module greenback::donation_dao_events {
+module greenback::events {
     // ============== Imports ============== //
 
     use std::signer;
     use std::string::String;
     use aptos_framework::event;
 
-    friend greenback::donation_dao;
+    friend greenback::dao;
 
     // ============== Structs ============== //
 

@@ -106,7 +106,7 @@ export async function createProposal(
         const transaction = await aptos.transaction.build.simple({
             sender: keylessAccount.accountAddress,
             data: {
-                function: `${VITE_CONTRACT_ID}::donation_dao::create_proposal`,
+                function: `${VITE_CONTRACT_ID}::dao::create_proposal`,
                 functionArguments: [
                     daoAccountAddress,
                     title,
@@ -142,7 +142,7 @@ export async function vote(
         const transaction = await aptos.transaction.build.simple({
             sender: keylessAccount.accountAddress,
             data: {
-                function: `${VITE_CONTRACT_ID}::donation_dao::vote`,
+                function: `${VITE_CONTRACT_ID}::dao::vote`,
                 functionArguments: [
                     daoAccountAddress,
                     proposalId,
@@ -174,7 +174,7 @@ export async function donate(
         const transaction = await aptos.transaction.build.simple({
             sender: keylessAccount.accountAddress,
             data: {
-                function: `${VITE_CONTRACT_ID}::donation_dao::donate`,
+                function: `${VITE_CONTRACT_ID}::dao::donate`,
                 functionArguments: [
                     daoAccountAddress,
                     amount

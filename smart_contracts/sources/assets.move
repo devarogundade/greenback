@@ -3,12 +3,18 @@ module greenback::assets {
 
     use std::option;
     use std::signer;
-    use std::string;
+    use std::string::{Self, String};
     use std::vector;
     use aptos_framework::event;
-    use aptos_framework::object;
+    use aptos_framework::object::{Self, Object};
     use aptos_framework::fungible_asset;
     use aptos_framework::primary_fungible_store;
+    use aptos_token_objects::collection;
+    use aptos_token_objects::token;
+
+    // ============== Errors ============== //
+
+    const E_TOKEN_AMOUNT: u64 = 1;
 
     // ============== Events ============== //
 
@@ -17,11 +23,11 @@ module greenback::assets {
         creator_addr: address,
         fa_obj_addr: address,
         max_supply: option::Option<u128>,
-        name: string::String,
-        symbol: string::String,
+        name: String,
+        symbol: String,
         decimals: u8,
-        icon_uri: string::String,
-        project_uri: string::String,
+        icon_uri: String,
+        project_uri: String,
     }
 
     #[event]
@@ -39,15 +45,22 @@ module greenback::assets {
         transfer_ref: fungible_asset::TransferRef
     }
 
+    struct DAController has key {
+        collection_name: String,
+        mutator_ref: collection::MutatorRef
+    }
+
     struct Registry has key {
-        assets: vector<object::Object<fungible_asset::Metadata>>
+        fungible_assets: vector<Object<fungible_asset::Metadata>>,
+        digital_assets: vector<Object<collection::Collection>>
     }
 
     // ============== Init Function ============== //
 
     fun init_module(sender: &signer) {
         let registry = Registry {
-            assets: vector::empty()
+            fungible_assets: vector::empty(),
+            digital_assets: vector::empty()
         };
 
         move_to(sender, registry);
@@ -65,36 +78,34 @@ module greenback::assets {
             string::utf8(b"Greenback Coin"), // name
             string::utf8(b"GCOIN"), // symbol
             8, // decimals
-            string::utf8(b"https://aptos-thegreenback.xyz/images/gcoin.png"), // icon
-            string::utf8(b"https://aptos-thegreenback.xyz") // project url
+            string::utf8(b"https://thegreenback.xyz/images/gcoin.png"), // icon
+            string::utf8(b"https://thegreenback.xyz") // project url
         );
+    }
 
+    public entry fun create_digital_assets(
+        sender: &signer,
+    ) acquires Registry {
         // GCOUPON
-        create_fungible_asset_internal(
+        create_digital_asset_internal(
             sender, 
-            option::none(), // max supply
-            string::utf8(b"Greenback Coupon"), // name
-            string::utf8(b"GCOUPON"), // symbol
-            0, // decimals
-            string::utf8(b"https://aptos-thegreenback.xyz/images/gcoupon.png"), // icon
-            string::utf8(b"https://aptos-thegreenback.xyz") // project url
+            string::utf8(b"Greenback Coupon description."), // description
+            string::utf8(b"Greenback Coupon"), // symbol
+            string::utf8(b"https://thegreenback.xyz") // project url
         );
 
         // GNFT
-        create_fungible_asset_internal(
+        create_digital_asset_internal(
             sender, 
-            option::none(), // max supply
-            string::utf8(b"Greenback NFT"), // name
-            string::utf8(b"GNFT"), // symbol
-            0, // decimals
-            string::utf8(b"https://aptos-thegreenback.xyz/images/gnft.png"), // icon
-            string::utf8(b"https://aptos-thegreenback.xyz") // project url
+            string::utf8(b"Greenback non-fungible token description."), // description
+            string::utf8(b"Greenback NFT"), // symbol
+            string::utf8(b"https://thegreenback.xyz") // project url
         );
     }
 
     public entry fun mint_fungible_asset(
         sender: &signer,
-        fa: object::Object<fungible_asset::Metadata>,
+        fa: Object<fungible_asset::Metadata>,
         amount: u64
     ) acquires FAController {
         let sender_addr = signer::address_of(sender);
@@ -108,11 +119,43 @@ module greenback::assets {
         });
     }
 
+    public entry fun mint_digital_asset(
+        sender: &signer,
+        to: address,
+        da: Object<collection::Collection>,
+        description: String,
+        name: String,
+        token_uri: String
+    ) acquires DAController {
+        let sender_addr = signer::address_of(sender);
+        let da_obj_addr = object::object_address(&da);
+        let config = borrow_global<DAController>(da_obj_addr);
+        
+        token::create_named_token(
+            sender,
+            config.collection_name,
+            description,
+            name,
+            option::none(),
+            token_uri
+        );
+
+        let token_addr = token::create_token_address(
+            &sender_addr, 
+            &config.collection_name,
+            &name
+        );
+
+        let token = object::address_to_object<token::Token>(token_addr);
+
+        object::transfer(sender, token, to);
+    }
+
     // ============== Friend Functions ============== //
 
-    public fun claim_fungible_asset(
-        store: object::Object<fungible_asset::FungibleStore>,
-        fa: object::Object<fungible_asset::Metadata>,
+    public fun transfer_fungible_asset(
+        store: Object<fungible_asset::FungibleStore>,
+        fa: Object<fungible_asset::Metadata>,
         amount: u64
     ) acquires FAController {
         let fa_obj_addr = object::object_address(&fa);
@@ -124,16 +167,24 @@ module greenback::assets {
         );
     }
 
+    public fun tranfer_digital_asset(
+        sender: &signer,
+        to: address,
+        token_obj: Object<token::Token>
+    ) {
+        object::transfer(sender, token_obj, to);
+    }
+
     // ============== Internal Functions ============== //
 
     fun create_fungible_asset_internal(
         sender: &signer,
         max_supply: option::Option<u128>,
-        name: string::String,
-        symbol: string::String,
+        name: String,
+        symbol: String,
         decimals: u8,
-        icon_uri: string::String,
-        project_uri: string::String
+        icon_uri: String,
+        project_uri: String
     ) acquires Registry {
         let fa_obj_constructor_ref = &object::create_sticky_object(@greenback);
         let fa_obj_signer = object::generate_signer(fa_obj_constructor_ref);
@@ -160,7 +211,7 @@ module greenback::assets {
         });
 
         let registry = borrow_global_mut<Registry>(@greenback);
-        vector::push_back(&mut registry.assets, object::address_to_object(fa_obj_addr));
+        vector::push_back(&mut registry.fungible_assets, object::address_to_object(fa_obj_addr));
 
         event::emit(CreateFAEvent {
             creator_addr: signer::address_of(sender),
@@ -174,18 +225,46 @@ module greenback::assets {
         });
     }
 
+    fun create_digital_asset_internal(
+        sender: &signer,
+        description: String,
+        name: String,
+        project_uri: String
+    ) acquires Registry {
+        let da_obj_constructor_ref = &collection::create_unlimited_collection(
+            sender,
+            description,
+            name,
+            option::none(),
+            project_uri
+        );
+        
+        let da_obj_signer = object::generate_signer(da_obj_constructor_ref);
+        let da_obj_addr = signer::address_of(&da_obj_signer);
+
+        let mutator_ref = collection::generate_mutator_ref(da_obj_constructor_ref);
+        
+        move_to(&da_obj_signer, DAController {
+            collection_name: name,
+            mutator_ref,
+        });
+
+        let registry = borrow_global_mut<Registry>(@greenback);
+        vector::push_back(&mut registry.digital_assets, object::address_to_object(da_obj_addr));
+    }
+
     // ============== View Functions =============== //
 
     #[view]
-    public fun get_registry(): vector<object::Object<fungible_asset::Metadata>> acquires Registry {
+    public fun get_registry(): vector<Object<fungible_asset::Metadata>> acquires Registry {
         let registry = borrow_global<Registry>(@greenback);
-        registry.assets
+        registry.fungible_assets
     }
 
     #[view]
     public fun get_metadata(
-        fa: object::Object<fungible_asset::Metadata>
-    ): (string::String, string::String, u8) {
+        fa: Object<fungible_asset::Metadata>
+    ): (String, String, u8) {
         (
             fungible_asset::name(fa),
             fungible_asset::symbol(fa),
@@ -194,7 +273,7 @@ module greenback::assets {
     }
 
     #[view]
-    public fun get_current_supply(fa: object::Object<fungible_asset::Metadata>): u128 {
+    public fun get_current_supply(fa: Object<fungible_asset::Metadata>): u128 {
         let maybe_supply = fungible_asset::supply(fa);
         if (option::is_some(&maybe_supply)) {
             option::extract(&mut maybe_supply)
@@ -204,7 +283,7 @@ module greenback::assets {
     }
 
     #[view]
-    public fun get_max_supply(fa: object::Object<fungible_asset::Metadata>): u128 {
+    public fun get_max_supply(fa: Object<fungible_asset::Metadata>): u128 {
         let maybe_supply = fungible_asset::maximum(fa);
         if (option::is_some(&maybe_supply)) {
             option::extract(&mut maybe_supply)
@@ -214,7 +293,7 @@ module greenback::assets {
     }
 
     #[view]
-    public fun get_balance(fa: object::Object<fungible_asset::Metadata>, user: address): u64 {
+    public fun get_balance(fa: Object<fungible_asset::Metadata>, user: address): u64 {
         primary_fungible_store::balance(user, fa)
     }
 }
