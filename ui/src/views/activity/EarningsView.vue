@@ -17,17 +17,17 @@ import { borrowString } from '@/scripts/utils';
 import type { Activity } from '@/types';
 import { format as formatTime } from 'timeago.js';
 
-const unclaimed_earnings = useUserStore().unclaimed_earnings;
-const donated_earnings = useUserStore().donated_earnings;
+const unclaimedEarnings = useUserStore().unclaimedEarnings;
+const donatedEarnings = useUserStore().donatedEarnings;
 
 const getUser = async (keylessAccount: KeylessAccount) => {
     const user = await getUserAccount(keylessAccount.accountAddress);
 
     if (user) {
-        useUserStore.setState({ unclaimed_earnings: user[0] });
-        useUserStore.setState({ withdrawn_earnings: user[1] });
-        useUserStore.setState({ donated_earnings: user[2] });
-        useUserStore.setState({ card_id: borrowString(user[3].vec[0]) });
+        useUserStore.setState({ unclaimedEarnings: user[0] });
+        useUserStore.setState({ withdrawnEarnings: user[1] });
+        useUserStore.setState({ donatedEarnings: user[2] });
+        useUserStore.setState({ cardId: borrowString(user[3].vec[0]) });
     }
 };
 
@@ -81,7 +81,7 @@ onMounted(async () => {
                     </div>
                     <div class="balance_item_value">
                         <GcoinIcon />
-                        <h3>{{ toCurrency(unclaimed_earnings) }}</h3>
+                        <h3>{{ toCurrency(unclaimedEarnings) }}</h3>
                     </div>
                     <span>≡ 2.47 APT</span>
                 </div>
@@ -93,7 +93,7 @@ onMounted(async () => {
                     </div>
                     <div class="balance_item_value">
                         <GcoinIcon :color="'var(--tx-semi)'" />
-                        <h3>{{ toCurrency(donated_earnings) }}</h3>
+                        <h3>{{ toCurrency(donatedEarnings) }}</h3>
                     </div>
                     <span>≡ 0.00 APT</span>
                 </div>

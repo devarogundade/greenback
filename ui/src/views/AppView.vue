@@ -31,18 +31,17 @@ redirectUrl.search = searchParams.toString();
 const keylessAccount = useKeylessAccounts().keylessAccount;
 
 const getAPTAmount = async (address: AccountAddress) => {
-    const apt_balance = await getAccountAPTAmount(address);
+    const aptBalance = await getAccountAPTAmount(address);
 
-    useUserStore.setState({ apt_balance });
+    useUserStore.setState({ aptBalance });
 
-    if (apt_balance && apt_balance > MIN_FAUCET_AMOUNT) {
-        toast.info('Faucet: skipped funding, you have sufficient APT.');
+    if (aptBalance && aptBalance > MIN_FAUCET_AMOUNT) {
         return;
     };
 
-    const tx_hash = await fundAccount(address, FAUCET_AMOUNT);
+    const txHash = await fundAccount(address, FAUCET_AMOUNT);
 
-    if (tx_hash) {
+    if (txHash) {
         getAPTAmount(address);
         toast.success('Faucet: your account has been funded with APT.');
     } else {
@@ -54,10 +53,10 @@ const getUser = async (keylessAccount: KeylessAccount) => {
     const user = await getUserAccount(keylessAccount.accountAddress);
 
     if (user) {
-        useUserStore.setState({ unclaimed_earnings: user[0] });
-        useUserStore.setState({ withdrawn_earnings: user[1] });
-        useUserStore.setState({ donated_earnings: user[2] });
-        useUserStore.setState({ card_id: borrowString(user[3].vec[0]) });
+        useUserStore.setState({ unclaimedEarnings: user[0] });
+        useUserStore.setState({ withdrawnEarnings: user[1] });
+        useUserStore.setState({ donatedEarnings: user[2] });
+        useUserStore.setState({ cardId: borrowString(user[3].vec[0]) });
         return;
     }
 

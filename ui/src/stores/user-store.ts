@@ -1,17 +1,17 @@
 import create from 'vue-zustand';
 
 interface User {
-    unclaimed_earnings: number;
-    withdrawn_earnings: number;
-    donated_earnings: number;
-    card_id: string | undefined;
-    apt_balance: number;
+    unclaimedEarnings: number;
+    withdrawnEarnings: number;
+    donatedEarnings: number;
+    cardId: string | undefined;
+    aptBalance: number;
 }
 
 export const useUserStore = create<User>(() => ({
-    unclaimed_earnings: 0,
-    withdrawn_earnings: 0,
-    donated_earnings: 0,
-    card_id: undefined,
-    apt_balance: 0
+    unclaimedEarnings: 0,
+    withdrawnEarnings: 0,
+    donatedEarnings: 0,
+    cardId: undefined,
+    aptBalance: 0
 }));

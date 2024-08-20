@@ -31,7 +31,7 @@ const copyAddress = () => {
     const addr = keylessAccount?.value?.accountAddress.toString();
 
     if (!addr) {
-        toast.error('Address is noy defined.');
+        toast.error('Address is not defined.');
         return;
     }
 
@@ -53,7 +53,7 @@ const copyAddress = () => {
                 <div class="actions">
                     <div class="tabs">
                         <button class="tabs_item">
-                            <p>Donate</p>
+                            <p>Donate (DAOs)</p>
                             <div class="tabs_item_icon">
                                 <ChevronDownIcon />
                             </div>

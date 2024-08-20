@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import Button from '@/components/buttons/Button.vue';
 import PlayCircleIcon from '@/components/icons/PlayCircleIcon.vue';
+import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import gsap from 'gsap';
 import ScrollTrigger from "gsap/ScrollTrigger";
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Navigation, Pagination } from 'swiper/modules';
+import { daoAddresses } from '@/scripts/data';
+import { getDAOs as getDAOsImpl } from '@/scripts/greenback-contracts';
+import ChevronRight from '@/components/icons/ChevronRight.vue';
+import type { DAO } from '@/types';
+import { toCurrency } from '@/scripts/utils';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -13,7 +19,15 @@ import 'swiper/css/pagination';
 gsap.registerPlugin(ScrollTrigger);
 const modules = [Navigation, Pagination];
 
+const daos = ref<DAO[]>([]);
+
+const getDAOs = async () => {
+  daos.value = await getDAOsImpl(daoAddresses);
+};
+
 onMounted(() => {
+  getDAOs();
+
   const sections = gsap.utils.toArray(".step");
 
   gsap.to(sections, {
@@ -138,41 +152,47 @@ onMounted(() => {
               </div>
             </div>
 
-            <Swiper :modules="modules" :loop="true" :slides-per-view="4" :space-between="20" navigation
-              :centeredSlides="true" :pagination="{ clickable: true, dynamicBullets: true, }">
+            <Swiper :modules="modules" :slides-per-view="4.2" :space-between="30" navigation :centeredSlides="true"
+              :pagination="{ clickable: true, dynamicBullets: true, }">
               <div class="slide_gradient">
                 <div></div>
                 <div></div>
               </div>
-              <SwiperSlide v-for="i in 10" :key="i">
-                <div class="campaign">
-                  <div class="campaign_image">
-                    <img src="https://www.globalgiving.org/pfil/65280/pict_featured.jpg" alt="">
-                  </div>
-                  <div class="campaign_text">
-                    <p>Food and Medicine.</p>
-
-                    <div class="campaign_progress">
-                      <div class="bar"></div>
+              <SwiperSlide v-for="dao, index in daos" :key="index">
+                <RouterLink :to="`/app/donate/${dao.daoAddress}`">
+                  <div class="dao">
+                    <div class="dao_name">
+                      <p>{{ dao.name }}</p>
                     </div>
-                  </div>
-                  <div class="campaign_info">
-                    <p class="campaign_info_price">
-                      $G 5,000,000
-                    </p>
 
-                    <div class="campaign_info_members">
-                      <div class="images">
-                        <img
-                          src="https://static.vecteezy.com/system/resources/thumbnails/026/829/465/small_2x/beautiful-girl-with-autumn-leaves-photo.jpg"
-                          alt="">
-                        <img src="https://www.bellanaija.com/wp-content/uploads/2021/07/Miss-Imo-Chrystal-Mbazuigwe.jpg"
-                          alt="">
+                    <div class="dao_detail">
+                      <div class="proposals">
+                        <p>Proposals</p>
+                        <div class="proposals_info">
+                          <p v-if="dao.nextProposalId == 0">No proposal</p>
+                          <div class="images">
+                            <img v-if="dao.nextProposalId > 0" src="/images/logo.png" alt="">
+                            <img v-if="dao.nextProposalId > 1" src="/images/logo.png" alt="">
+                            <img v-if="dao.nextProposalId > 2" src="/images/logo.png" alt="">
+                          </div>
+                          <p>{{ dao.nextProposalId > 3 ? `+ ${dao.nextProposalId - 3}` : '' }}</p>
+                        </div>
                       </div>
-                      <p>1,393,823 <br>Joined Donors</p>
+
+                      <Button :text="'View all'">
+                        <ChevronRight />
+                      </Button>
+                    </div>
+
+                    <div class="dao_raised_amount">
+                      <p>Raised amount</p>
+                      <div class="dao_raised_amount_info">
+                        <GcoinIcon />
+                        <p> {{ toCurrency(dao.raisedAmount) }}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </RouterLink>
               </SwiperSlide>
             </Swiper>
 
@@ -402,48 +422,6 @@ onMounted(() => {
   width: 1440px;
 }
 
-.campaign {
-  border: 1px solid var(--bg-darkest);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.campaign_image {
-  width: 100%;
-  height: 140px;
-}
-
-.campaign_image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.campaign_text {
-  padding: 10px 16px;
-}
-
-.campaign_text>p {
-  color: var(--tx-normal);
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.campaign_progress {
-  margin-top: 10px;
-  height: 4px;
-  width: 100%;
-  background: var(--bg-dark);
-  border-radius: 10px;
-}
-
-.campaign_progress .bar {
-  height: 100%;
-  width: 80%;
-  background: linear-gradient(to right, var(--primary-light), var(--primary));
-  border-radius: 20px;
-}
-
 .slide_gradient {
   position: absolute;
   width: 100%;
@@ -525,5 +503,103 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-top: 60px;
+}
+
+
+.dao {
+  border: 1px solid var(--bg-darkest);
+  padding: 16px;
+  border-radius: 10px;
+}
+
+.dao_name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dao_name>p {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--tx-normal);
+}
+
+.dao_detail {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bg-darker);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.proposals>p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tx-semi);
+}
+
+.proposals_info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.proposals_info>p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tx-dimmed);
+}
+
+.proposals .images {
+  display: flex;
+  align-items: center;
+}
+
+.proposals img {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-left: -10px;
+}
+
+.proposals img:first-child {
+  margin: 0;
+}
+
+.dao_raised_amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bg-darker);
+}
+
+.dao_raised_amount>p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tx-semi);
+}
+
+.dao_raised_amount svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dao_raised_amount_info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dao_raised_amount_info p {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--tx-semi);
+  margin-top: 4px;
 }
 </style>

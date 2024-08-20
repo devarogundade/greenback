@@ -21,11 +21,24 @@ export type GNFT = {
 
 export type DAO = {
     name: string;
-    description: string;
-    dao_address: string;
-    available_amount: string;
-    target_amount: string;
+    availableAmount: number;
+    raisedAmount: number;
+    resolveThreshold: number;
+    votingDuration: number;
+    minRequiredProposerVotingPower: number;
+    nextProposalId: number;
+    daoAddress: string;
+};
 
+export type Proposal = {
+    title: string;
+    description: string;
+    image: string;
+    proposedAmount: number;
+    startTimeSec: number;
+    resolution: number;
+    finalYesVotes: number;
+    finalNoVotes: number;
 };
 
 export enum DisposeChannel {

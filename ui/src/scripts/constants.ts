@@ -4,7 +4,7 @@ export const LocalStorageKeys = {
     keylessAccounts: "@aptos-connect/keyless-accounts",
 };
 
-export const testnetClient = new Aptos(
+export const aptos = new Aptos(
     new AptosConfig({ network: Network.TESTNET })
 );
 

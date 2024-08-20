@@ -1,5 +1,10 @@
 import type { CouponProvider, GNFT } from "@/types";
 
+export const daoAddresses: string[] = [
+    '0xde73832b3f859532538641eaa8d2ac34d32160b809abc775ef09e1241c4ba82a',
+    '0x3f5de56e75a289c7fb7f7f03a21a33b15ac5eb122d44444144f30cd3030a0e90'
+];
+
 export const couponProviders: CouponProvider[] = [
     {
         id: 1,

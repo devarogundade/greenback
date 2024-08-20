@@ -58,11 +58,8 @@ module greenback::dao {
         next_proposal_id: u64,
         dao_signer_capability: SignerCapability,
         gcoin: Object<Metadata>,
-        admin: address
-    }
-
-    struct Proposals has key {
         proposals: Table<u64, Proposal>,
+        admin: address
     }
 
     struct Proposal has copy, drop, store {
@@ -115,15 +112,9 @@ module greenback::dao {
                 next_proposal_id: 0,
                 dao_signer_capability: res_cap,
                 gcoin,
+                proposals: table::new(),
                 admin: admin_address
             },
-        );
-
-        move_to(
-            &res_signer,
-            Proposals {
-                proposals: table::new()
-            }
         );
 
         move_to(
@@ -153,7 +144,7 @@ module greenback::dao {
         image: String,
         proposed_amount: u64,
         start_time_sec: u64,
-    ) acquires DAO, Proposals {
+    ) acquires DAO {
         let dao = borrow_global_mut<DAO>(dao_address);
 
         assert!(string::length(&title) <= 64, error::invalid_argument(E_STRING_TOO_LONG));
@@ -184,10 +175,9 @@ module greenback::dao {
             final_no_votes: 0,
         };
 
-        let proposal_store = borrow_global_mut<Proposals>(dao_address);
         let proposal_id = dao.next_proposal_id + 1;
 
-        table::add(&mut proposal_store.proposals, proposal_id, proposal);
+        table::add(&mut dao.proposals, proposal_id, proposal);
         dao.next_proposal_id = proposal_id;
 
         events::emit_create_proposal_event(
@@ -207,15 +197,14 @@ module greenback::dao {
         dao_address: address,
         proposal_id: u64,
         vote: bool
-    ) acquires DAO, ProposalVotingStatistics, Proposals {
+    ) acquires DAO, ProposalVotingStatistics {
         assert!(exists<DAO>(dao_address), error::not_found(E_DAO_NOT_EXIST));
 
         let dao = borrow_global_mut<DAO>(dao_address);
-        let proposals = borrow_global<Proposals>(dao_address);
 
         // assert the proposal hasn't ended, voter can can only vote for the proposal that starts and hasn't ended
-        assert!(table::contains(&proposals.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
-        let proposal = table::borrow(&proposals.proposals, proposal_id);
+        assert!(table::contains(&dao.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
+        let proposal = table::borrow(&dao.proposals, proposal_id);
         let now = timestamp::now_seconds();
         assert!(now < proposal.start_time_sec + dao.voting_duration, error::invalid_argument(E_PROPOSAL_ENDED));
         assert!(now > proposal.start_time_sec, error::invalid_argument(E_PROPOSAL_NOT_STARTED));
@@ -261,14 +250,13 @@ module greenback::dao {
     public entry fun resolve(
         proposal_id: u64, 
         dao_address: address
-    ) acquires Proposals, DAO, ProposalVotingStatistics {
+    ) acquires DAO, ProposalVotingStatistics {
         assert!(exists<DAO>(dao_address), error::not_found(E_DAO_NOT_EXIST));
         let dao = borrow_global<DAO>(dao_address);
 
         // assert the proposal voting ended
-        let proposals = borrow_global<Proposals>(dao_address);
-        assert!(table::contains(&proposals.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
-        let proposal = table::borrow(&proposals.proposals, proposal_id);
+        assert!(table::contains(&dao.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
+        let proposal = table::borrow(&dao.proposals, proposal_id);
         let now = timestamp::now_seconds();
         assert!(now >= proposal.start_time_sec + dao.voting_duration, error::invalid_argument(E_PROPOSAL_NOT_END));
       
@@ -302,13 +290,14 @@ module greenback::dao {
         proposal_id: u64, 
         dao_address: address, 
         reason: String
-    ) acquires DAO, Proposals, ProposalVotingStatistics {
+    ) acquires DAO, ProposalVotingStatistics {
         let resolver = signer::address_of(admin);
 
+        let dao = borrow_global<DAO>(dao_address);
+
         // assert the proposal voting ended
-        let proposals = borrow_global<Proposals>(dao_address);
-        assert!(table::contains(&proposals.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
-        let proposal = table::borrow(&proposals.proposals, proposal_id);
+        assert!(table::contains(&dao.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
+        let proposal = table::borrow(&dao.proposals, proposal_id);
 
         // assert the proposal is unresolved yet
         assert!(proposal.resolution == PROPOSAL_PENDING, error::invalid_argument(E_PROPOSAL_RESOLVED));
@@ -327,12 +316,11 @@ module greenback::dao {
     fun resolve_internal(
         resolver: Option<address>,
         proposal_id: u64, dao_address: address
-    ) acquires DAO, Proposals, ProposalVotingStatistics {
+    ) acquires DAO, ProposalVotingStatistics {
         let dao = borrow_global_mut<DAO>(dao_address);
 
         // assert the proposal voting ended
-        let proposals = borrow_global_mut<Proposals>(dao_address);
-        let proposal = table::borrow_mut(&mut proposals.proposals, proposal_id);
+        let proposal = table::borrow_mut(&mut dao.proposals, proposal_id);
 
         if (option::is_some(&resolver)) {
             // only DAO admin can execute the proposal directly
@@ -373,7 +361,7 @@ module greenback::dao {
         )
     }
 
-    fun execute_proposal(
+    inline fun execute_proposal(
         proposal: &mut Proposal, 
         dao: &mut DAO
     ) {
@@ -394,22 +382,21 @@ module greenback::dao {
     // ============== View Functions ============== //
 
     #[view]
-    public fun get_proposal(proposal_id: u64, dao: address): Proposal acquires Proposals {
-        assert!(exists<Proposals>(dao), error::not_found(E_PR0POSALS_NOT_EXIST_AT_ADDRESS));
-        let proposals = &borrow_global<Proposals>(dao).proposals;
+    public fun get_proposal(proposal_id: u64, dao_address: address): Proposal acquires DAO {
+        let proposals = &borrow_global<DAO>(dao_address).proposals;
         assert!(table::contains(proposals, proposal_id), error::not_found(E_PR0POSALS_ID_NOT_EXIST));
         *table::borrow(proposals, proposal_id)
     }
 
     #[view]
-    public fun get_proposal_resolution(proposal_id: u64, dao: address): u8 acquires Proposals {
-        let proposal = get_proposal(proposal_id, dao);
+    public fun get_proposal_resolution(proposal_id: u64, dao_address: address): u8 acquires DAO {
+        let proposal = get_proposal(proposal_id, dao_address);
         proposal.resolution
     }
 
     #[view]
-    public fun unpack_dao(dao: address): (String, u64, u64, u64, u64, u64, u64, address) acquires DAO {
-        let dao = borrow_global<DAO>(dao);
+    public fun unpack_dao(dao_address: address): (String, u64, u64, u64, u64, u64, u64, address) acquires DAO {
+        let dao = borrow_global<DAO>(dao_address);
         (
             dao.name,
             dao.available_amount,
@@ -421,4 +408,19 @@ module greenback::dao {
             dao.admin
         )
     }
-}
+
+    #[view]
+    public fun unpack_proposal(proposal_id: u64, dao_address: address): (String, String, String, u64, u64, u8, u64, u64) acquires DAO {
+        let proposal = get_proposal(proposal_id, dao_address);
+        (
+            proposal.title,
+            proposal.description,
+            proposal.image,
+            proposal.proposed_amount,
+            proposal.start_time_sec,
+            proposal.resolution,
+            proposal.final_yes_votes,
+            proposal.final_no_votes
+        )
+    }
+} 

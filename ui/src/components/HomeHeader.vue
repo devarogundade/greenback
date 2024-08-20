@@ -11,7 +11,7 @@ import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
             <header>
                 <div class="tabs">
                     <button class="tabs_item">
-                        <p>Donate</p>
+                        <p>Donate (DAOs)</p>
                         <div class="tabs_item_icon">
                             <ChevronDownIcon />
                         </div>

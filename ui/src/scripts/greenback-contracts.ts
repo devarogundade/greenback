@@ -1,16 +1,10 @@
+import { daoAddresses } from './data';
 import {
-    Account,
     AccountAddress,
-    Aptos,
-    AptosConfig,
-    Ed25519PrivateKey,
     KeylessAccount,
-    Network,
 } from "@aptos-labs/ts-sdk";
-import { testnetClient, VITE_CONTRACT_ID } from "./constants";
-
-const config = new AptosConfig({ network: Network.TESTNET });
-const aptos = new Aptos(config);
+import { aptos, VITE_CONTRACT_ID } from "./constants";
+import type { DAO, Proposal } from "@/types";
 
 export async function createUser(keylessAccount: KeylessAccount): Promise<string | null> {
     try {
@@ -196,14 +190,114 @@ export async function donate(
 
 export async function getUserAccount(address: AccountAddress): Promise<any> {
     try {
-        const userResponse = (await testnetClient.view({
+        return await aptos.view({
             payload: {
                 function: `${VITE_CONTRACT_ID}::main::get_user`,
                 functionArguments: [address]
             },
+        });
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}
+
+export async function getDAOs(daoAddresses: string[]): Promise<DAO[]> {
+    const promises: Promise<DAO | null>[] = [];
+
+    daoAddresses.forEach(daoAddress => promises.push(
+        unpackDAO(daoAddress)
+    ));
+
+    const daos = await Promise.all(promises);
+    return daos.filter(dao => dao != null);
+}
+
+export async function getDAOProposals(
+    daoAddress: string,
+    proposalIds: number[]
+): Promise<Proposal[]> {
+    try {
+        const promises: Promise<Proposal | null>[] = [];
+
+        proposalIds.forEach(proposalId => promises.push(
+            unpackProposal(daoAddress, proposalId)
+        ));
+
+        const proposals = await Promise.all(promises);
+        return proposals.filter(proposal => proposal != null);
+    } catch (error) {
+        console.log(error);
+        return [];
+    }
+}
+
+export async function unpackProposal(
+    daoAddress: string,
+    proposalId: number
+): Promise<Proposal | null> {
+    try {
+        const response = (await aptos.view({
+            payload: {
+                function: `${VITE_CONTRACT_ID}::dao::unpack_proposal`,
+                functionArguments: [daoAddress, proposalId]
+            },
         }));
 
-        return userResponse;
+        const proposal: Proposal = {
+            // @ts-ignore
+            title: response[0],
+            // @ts-ignore
+            description: response[1],
+            // @ts-ignore
+            image: response[2],
+            // @ts-ignore
+            proposedAmount: response[3],
+            // @ts-ignore
+            startTimeSec: response[4],
+            // @ts-ignore
+            resolution: response[5],
+            // @ts-ignore
+            finalYesVotes: response[6],
+            // @ts-ignore
+            finalNoVotes: response[7]
+        };
+
+        return proposal;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}
+
+export async function unpackDAO(daoAddress: string): Promise<DAO | null> {
+    try {
+        const response = (await aptos.view({
+            payload: {
+                function: `${VITE_CONTRACT_ID}::dao::unpack_dao`,
+                functionArguments: [daoAddress]
+            },
+        }));
+
+        const dao: DAO = {
+            // @ts-ignore
+            name: response[0],
+            // @ts-ignore
+            availableAmount: response[1],
+            // @ts-ignore
+            raisedAmount: response[2],
+            // @ts-ignore
+            resolveThreshold: response[3],
+            // @ts-ignore
+            votingDuration: response[4],
+            // @ts-ignore
+            minRequiredProposerVotingPower: response[5],
+            // @ts-ignore
+            nextProposalId: response[6],
+            daoAddress
+        };
+
+        return dao;
     } catch (error) {
         console.log(error);
         return null;

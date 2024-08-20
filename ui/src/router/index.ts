@@ -4,10 +4,12 @@ import AppView from '@/views/AppView.vue';
 import OverviewView from '@/views/activity/OverviewView.vue';
 import EarningsView from '@/views/activity/EarningsView.vue';
 import DonateView from '@/views/donate/DonateView.vue';
+import DonateDetailView from '@/views/donate/DonateDetailView.vue';
 import CouponsView from '@/views/inventory/CouponsView.vue';
 import AchievementsView from '@/views/inventory/AchievementsView.vue';
 import GCardView from '@/views/gcard/GCardView.vue';
 import CallbackView from '@/views/auth/CallbackView.vue';
+import NewProposalView from '@/views/donate/NewProposalView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,7 +55,23 @@ const router = createRouter({
         {
           path: '/app/donate',
           name: 'app-donate',
-          component: DonateView
+          children: [
+            {
+              path: '/app/donate',
+              name: 'app-donate',
+              component: DonateView
+            },
+            {
+              path: '/app/donate/:id',
+              name: 'app-donate-id',
+              component: DonateDetailView
+            },
+            {
+              path: '/app/donate/:id/create',
+              name: 'app-donate-id-create',
+              component: NewProposalView
+            }
+          ]
         },
         {
           path: '/app/inventory',

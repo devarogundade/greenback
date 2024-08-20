@@ -23,4 +23,11 @@ export const isEmail = (value: string): boolean => {
 export const borrowString = (value?: string | null): string | undefined => {
     if (!value || value.length == 0) return undefined;
     return value;
-};  
+};
+
+export const toDays = (secs: number): { days: number, hours: string; } => {
+    const totalHours = secs / 60 / 60;
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    return { days, hours: hours.toFixed(2) };
+};

@@ -22,7 +22,7 @@ const requestForm = ref<RequestCardForm>({
     location: '',
     color: 'green'
 });
-const cardId = useUserStore().card_id;
+const cardId = useUserStore().cardId;
 
 const selectColor = (color: 'green' | 'gray') => {
     requestForm.value.color = color;
@@ -32,10 +32,10 @@ const getUser = async (keylessAccount: KeylessAccount) => {
     const user = await getUserAccount(keylessAccount.accountAddress);
 
     if (user) {
-        useUserStore.setState({ unclaimed_earnings: user[0] });
-        useUserStore.setState({ withdrawn_earnings: user[1] });
-        useUserStore.setState({ donated_earnings: user[2] });
-        useUserStore.setState({ card_id: borrowString(user[3].vec[0]) });
+        useUserStore.setState({ unclaimedEarnings: user[0] });
+        useUserStore.setState({ withdrawnEarnings: user[1] });
+        useUserStore.setState({ donatedEarnings: user[2] });
+        useUserStore.setState({ cardId: borrowString(user[3].vec[0]) });
     }
 };
 

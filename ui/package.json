@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "^1.27.0",
+    "@vuepic/vue-datepicker": "^9.0.2",
     "axios": "^1.7.4",
+    "firebase": "^10.13.0",
     "gsap": "^3.12.5",
     "jwt-decode": "^4.0.0",
     "swiper": "^11.1.9",

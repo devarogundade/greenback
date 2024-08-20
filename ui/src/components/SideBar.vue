@@ -37,7 +37,7 @@ const route = useRoute();
                 <div class="tab_parent">
                     <RouterLink to="/app/donate">
                         <div class="title">
-                            <h3>Donate</h3>
+                            <h3>Donate (DAOs)</h3>
                             <BubbleIcon
                                 :color="(route.name as string)?.startsWith('app-donate') ? '#161618' : '#ABADAE'" />
                         </div>

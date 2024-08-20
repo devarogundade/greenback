@@ -1,12 +1,12 @@
 import type { AccountAddress } from "@aptos-labs/ts-sdk";
-import { testnetClient } from "./constants";
+import { aptos } from "./constants";
 
 export async function fundAccount(
     accountAddress: AccountAddress,
     amount: number
 ): Promise<string | null> {
     try {
-        const { hash: tx_hash } = await testnetClient.fundAccount({
+        const { hash: tx_hash } = await aptos.fundAccount({
             accountAddress,
             amount
         });
@@ -22,7 +22,7 @@ export async function getAccountAPTAmount(
     accountAddress: AccountAddress
 ): Promise<number> {
     try {
-        const balance = await testnetClient.getAccountAPTAmount({
+        const balance = await aptos.getAccountAPTAmount({
             accountAddress
         });
 

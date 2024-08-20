@@ -5,7 +5,7 @@ import {
     KeylessAccount,
     type ProofFetchStatus,
 } from '@aptos-labs/ts-sdk';
-import { LocalStorageKeys, testnetClient } from '@/scripts/constants';
+import { LocalStorageKeys, aptos } from '@/scripts/constants';
 import { validateIdToken } from '@/scripts/idToken';
 import {
     EphemeralKeyPairEncoding,
@@ -114,7 +114,7 @@ export const useKeylessAccounts = create<
                     );
                     let keylessAccount: KeylessAccount | undefined;
                     try {
-                        keylessAccount = await testnetClient.deriveKeylessAccount({
+                        keylessAccount = await aptos.deriveKeylessAccount({
                             ephemeralKeyPair,
                             jwt: idToken,
                             proofFetchCallback,
@@ -122,7 +122,7 @@ export const useKeylessAccounts = create<
                     } catch (error) {
                         // If we cannot derive an account using the pepper service, attempt to derive it using the stored pepper
                         if (!storedAccount?.pepper) throw error;
-                        keylessAccount = await testnetClient.deriveKeylessAccount({
+                        keylessAccount = await aptos.deriveKeylessAccount({
                             ephemeralKeyPair,
                             jwt: idToken,
                             pepper: storedAccount.pepper,
