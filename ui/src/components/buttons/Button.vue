@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ProgressInnerBox from '@/components/ProgressInnerBox.vue';
+
 const props = defineProps({
     text: { type: String, require: true },
     loading: { type: Boolean },
@@ -8,8 +10,10 @@ const props = defineProps({
 
 <template>
     <button :disabled="disable">
-        <p class="text">{{ props.text }}</p>
-        <slot></slot>
+        <p v-if="!loading" class="text">{{ props.text }}</p>
+        <ProgressInnerBox v-else />
+
+        <slot v-if="!loading"></slot>
     </button>
 </template>
 

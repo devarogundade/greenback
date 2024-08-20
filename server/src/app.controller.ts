@@ -11,8 +11,8 @@ import { Paged } from './types';
 export class AppController {
   constructor(private readonly appService: AppService) { }
 
-  @Post('/create-card')
-  createCard(@Body() dto: RequestCardDto): Promise<boolean> {
+  @Post('/request-card')
+  requestCard(@Body() dto: RequestCardDto): Promise<boolean> {
     return this.appService.requestCard(dto);
   }
 

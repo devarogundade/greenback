@@ -2,21 +2,19 @@
 
 import { createTransport } from 'nodemailer';
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { Campaign } from '../database/schemas/dao';
 
 export const Templates = {
-    buildMailForCardCreate: function (username: string, location: string): string {
+    buildMailForCardCreate: function (
+        name: string,
+        location: string,
+        tx_hash: string
+    ): string {
         return `
-            <h3>Hi ${username}.</h3>
+            <h3>Hi ${name}.</h3>
             <br /> <br />
             <p>We have sent your GreenBack card to ${location}, through our courier service provider.</p>
-        `;
-    },
-    buildMailForDonate: function (username: string, campaign: Campaign): string {
-        return `
-            <h3>Hi ${username}.</h3>
             <br /> <br />
-            <p>Thanks for helping the world green back. Your donation to ${campaign.title} were received.</p>
+            <a href="https://explorer.aptoslabs.com/txn/${tx_hash}?network=testnet">View Transacton</a>
         `;
     }
 };

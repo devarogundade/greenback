@@ -1,9 +1,10 @@
-export type OrderForm = {
+export interface RequestCardForm {
+    user_address: string;
     name: string;
     email: string;
-    location: string;
     color: 'green' | 'gray';
-};
+    location: string;
+}
 
 export type CouponProvider = {
     id: number;
@@ -16,6 +17,15 @@ export type CouponProvider = {
 export type GNFT = {
     name: string;
     image: string;
+};
+
+export type DAO = {
+    name: string;
+    description: string;
+    dao_address: string;
+    available_amount: string;
+    target_amount: string;
+
 };
 
 export enum DisposeChannel {

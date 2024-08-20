@@ -30,7 +30,8 @@ module greenback::main {
     struct User has key {
         unclaimed_earnings: u64,
         withdrawn_earnings: u64,
-        donated_earnings: u64
+        donated_earnings: u64,
+        card_id: Option<String>
     }
 
     struct Registry has key {
@@ -97,7 +98,8 @@ module greenback::main {
         let user = User {
             unclaimed_earnings: 0,
             withdrawn_earnings: 0,
-            donated_earnings: 0
+            donated_earnings: 0,
+            card_id: option::none()
         };
 
         // Move user to the user account.
@@ -235,12 +237,14 @@ module greenback::main {
         admin: &signer,
         user_address: address,
         card_id: String
-    ) acquires Registry {
+    ) acquires User, Registry {
         only_admin_internal(admin);
 
         let registry = borrow_global_mut<Registry>(@greenback);
+        let user = borrow_global_mut<User>(user_address);
 
         table::add(&mut registry.user_cards, card_id, user_address);
+        user.card_id = option::some(card_id);
     }
 
     public fun on_donate(
@@ -304,19 +308,20 @@ module greenback::main {
     // ============== View Functions ============== //
     
     #[view]
-    fun get_user(
+    public fun get_user(
         user_address: address
-    ): (u64, u64, u64) acquires User {
+    ): (u64, u64, u64, Option<String>) acquires User {
         let user = borrow_global<User>(user_address);
         (
             user.unclaimed_earnings,
             user.withdrawn_earnings,
-            user.donated_earnings
+            user.donated_earnings,
+            user.card_id
         )
     }
 
     #[view]
-    fun get_user_address(
+    public fun get_user_address(
         card_id: String
     ): address acquires Registry {
         let registry = borrow_global<Registry>(@greenback);
@@ -324,13 +329,13 @@ module greenback::main {
     }
 
     #[view]
-    fun gcoin_to_aptos(): u64 acquires Registry {
+    public fun gcoin_to_aptos(): u64 acquires Registry {
         let registry = borrow_global<Registry>(@greenback);
         registry.gcoin_to_aptos
     }
 
     #[view]
-    fun next_machine_id(): u64 acquires Registry {
+    public fun next_machine_id(): u64 acquires Registry {
         let registry = borrow_global<Registry>(@greenback);
         registry.next_machine_id
     }

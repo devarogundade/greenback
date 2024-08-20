@@ -17,7 +17,7 @@ export async function createUser(keylessAccount: KeylessAccount): Promise<string
         const transaction = await aptos.transaction.build.simple({
             sender: keylessAccount.accountAddress,
             data: {
-                function: `${VITE_CONTRACT_ID}::greenback::create_user`,
+                function: `${VITE_CONTRACT_ID}::main::create_user`,
                 functionArguments: []
             },
         });
@@ -42,7 +42,7 @@ export async function claimEarnings(
         const transaction = await aptos.transaction.build.simple({
             sender: keylessAccount.accountAddress,
             data: {
-                function: `${VITE_CONTRACT_ID}::greenback::claim_earnings`,
+                function: `${VITE_CONTRACT_ID}::main::claim_earnings`,
                 functionArguments: [
                     amount
                 ]
@@ -71,7 +71,7 @@ export async function mintCoupon(
         const transaction = await aptos.transaction.build.simple({
             sender: keylessAccount.accountAddress,
             data: {
-                function: `${VITE_CONTRACT_ID}::greenback::mint_coupon`,
+                function: `${VITE_CONTRACT_ID}::main::mint_coupon`,
                 functionArguments: [
                     couponId,
                     amount
@@ -198,12 +198,12 @@ export async function getUserAccount(address: AccountAddress): Promise<any> {
     try {
         const userResponse = (await testnetClient.view({
             payload: {
-                function: `${VITE_CONTRACT_ID}::greenback::get_user`,
+                function: `${VITE_CONTRACT_ID}::main::get_user`,
                 functionArguments: [address]
             },
         }));
 
-        return userResponse[0];
+        return userResponse;
     } catch (error) {
         console.log(error);
         return null;

@@ -7,8 +7,9 @@ import { watch } from 'vue';
 import { useUserStore } from '@/stores/user-store';
 import { getAccountAPTAmount, fundAccount } from '@/scripts/aptos-utils';
 import { MIN_FAUCET_AMOUNT, FAUCET_AMOUNT } from '@/scripts/constants';
-import { createUser, getUserAccount } from '@/scripts/greenback-contract';
+import { createUser, getUserAccount } from '@/scripts/greenback-contracts';
 import { AccountAddress, KeylessAccount } from "@aptos-labs/ts-sdk";
+import { borrowString } from '@/scripts/utils';
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 
@@ -53,10 +54,10 @@ const getUser = async (keylessAccount: KeylessAccount) => {
     const user = await getUserAccount(keylessAccount.accountAddress);
 
     if (user) {
-        useUserStore.setState({ unclaimed_earnings: 0 });
-        useUserStore.setState({ withdrawn_earnings: 0 });
-        useUserStore.setState({ donated_earnings: 0 });
-        useUserStore.setState({ card_id: undefined });
+        useUserStore.setState({ unclaimed_earnings: user[0] });
+        useUserStore.setState({ withdrawn_earnings: user[1] });
+        useUserStore.setState({ donated_earnings: user[2] });
+        useUserStore.setState({ card_id: borrowString(user[3].vec[0]) });
         return;
     }
 

@@ -5,17 +5,18 @@ import {
     AccountAddress,
     Aptos,
     AptosConfig,
-    Ed25519PrivateKey,
     Network,
 } from "@aptos-labs/ts-sdk";
 
-export class AptosContract {
+export class GreenbackContract {
     private signer: Account;
     private config: AptosConfig;
 
     constructor() {
-        const privateKey = new Ed25519PrivateKey(process.env.PRIVATE_KEY);
-        this.signer = Account.fromPrivateKey({ privateKey });
+        this.signer = Account.fromDerivationPath({
+            path: process.env.MNEMONIC_PATH,
+            mnemonic: process.env.MNEMONIC
+        });
 
         this.config = new AptosConfig({ network: Network.TESTNET });
     }
@@ -33,7 +34,7 @@ export class AptosContract {
             const transaction = await aptos.transaction.build.simple({
                 sender: this.signer.accountAddress,
                 data: {
-                    function: `${process.env.CONTRACT_ID}::greenback::dispose_to_machine`,
+                    function: `${process.env.CONTRACT_ID}::main::dispose_to_machine`,
                     functionArguments: [
                         userAccountAddress,
                         machineId,
@@ -54,9 +55,9 @@ export class AptosContract {
         }
     }
 
-    async mintGnftToUser(
+    async updateUserCard(
         userAddress: string,
-        amount: number
+        cardId: string
     ): Promise<string | null> {
         try {
             const aptos = new Aptos(this.config);
@@ -66,10 +67,10 @@ export class AptosContract {
             const transaction = await aptos.transaction.build.simple({
                 sender: this.signer.accountAddress,
                 data: {
-                    function: `${process.env.CONTRACT_ID}::greenback::mint_gnft_to_user`,
+                    function: `${process.env.CONTRACT_ID}::main::update_user_card`,
                     functionArguments: [
                         userAccountAddress,
-                        amount
+                        cardId
                     ]
                 },
             });

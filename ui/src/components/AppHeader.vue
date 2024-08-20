@@ -6,6 +6,10 @@ import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
 import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
 import useEphemeralKeyPair from "@/scripts/useEphemeralKeyPair";
 import { collapseAddress } from '@/scripts/utils';
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
+
+const toast = useToast({ duration: 4000, position: 'top', dismissible: true });
 
 const ephemeralKeyPair = useEphemeralKeyPair();
 
@@ -22,6 +26,18 @@ const searchParams = new URLSearchParams({
 redirectUrl.search = searchParams.toString();
 
 const keylessAccount = useKeylessAccounts().keylessAccount;
+
+const copyAddress = () => {
+    const addr = keylessAccount?.value?.accountAddress.toString();
+
+    if (!addr) {
+        toast.error('Address is noy defined.');
+        return;
+    }
+
+    navigator.clipboard.writeText(addr);
+    toast.success('Address copied to clipboard.');
+};
 </script>
 
 <template>
@@ -64,11 +80,11 @@ const keylessAccount = useKeylessAccounts().keylessAccount;
 
                     <RouterLink to="/app/inventory/achievements">
                         <button class="tabs_item">
-                            <p>Achievements</p>
+                            <p>Achievements 🏆</p>
                         </button>
                     </RouterLink>
 
-                    <Button v-if="keylessAccount"
+                    <Button v-if="keylessAccount" @click="copyAddress"
                         :text="`${collapseAddress(keylessAccount?.accountAddress.toString())}`">
                         <CopyIcon />
                     </Button>

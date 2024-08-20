@@ -7,9 +7,6 @@ import { DisposeChannel } from 'src/types';
 export type ActivityDocument = HydratedDocument<Activity>;
 @Schema()
 export class Activity {
-    @Prop({ required: true, unique: true, auto: true })
-    _id: string;
-
     @Prop({ required: true })
     user_address: string;
 

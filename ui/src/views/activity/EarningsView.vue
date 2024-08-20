@@ -1,10 +1,70 @@
 <script setup lang="ts">
+import ProgressBox from '@/components/ProgressBox.vue';
 import Button from '@/components/buttons/Button.vue';
 import ImportIcon from '@/components/icons/ImportIcon.vue';
 import OutIcon from '@/components/icons/OutIcon.vue';
 import CoinIcon from '@/components/icons/CoinIcon.vue';
 import LovelyIcon from '@/components/icons/LovelyIcon.vue';
 import GcoinIcon from '@/components/icons/GcoinIcon.vue';
+import { useUserStore } from '@/stores/user-store';
+import { toCurrency } from '@/scripts/utils';
+import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { KeylessAccount, AccountAddress } from "@aptos-labs/ts-sdk";
+import { getUserAccount } from '@/scripts/greenback-contracts';
+import { getUserActivities } from '@/scripts/greenback-server';
+import { onMounted, ref } from 'vue';
+import { borrowString } from '@/scripts/utils';
+import type { Activity } from '@/types';
+import { format as formatTime } from 'timeago.js';
+
+const unclaimed_earnings = useUserStore().unclaimed_earnings;
+const donated_earnings = useUserStore().donated_earnings;
+
+const getUser = async (keylessAccount: KeylessAccount) => {
+    const user = await getUserAccount(keylessAccount.accountAddress);
+
+    if (user) {
+        useUserStore.setState({ unclaimed_earnings: user[0] });
+        useUserStore.setState({ withdrawn_earnings: user[1] });
+        useUserStore.setState({ donated_earnings: user[2] });
+        useUserStore.setState({ card_id: borrowString(user[3].vec[0]) });
+    }
+};
+
+const getActivities = async (accountAddress: AccountAddress) => {
+    loadingActivites.value = page.value == 1;
+    const result = await getUserActivities(accountAddress, page.value);
+    if (result && result.data) {
+        activities.value = [...activities.value, ...result.data];
+        lastPage.value = result.lastPage;
+        totalActivities.value = result.total;
+    }
+
+    loadingActivites.value = false;
+};
+
+const showMoreActivites = () => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+    if (page.value >= lastPage.value) return;
+
+    page.value = page.value += 1;
+    getActivities(keylessAccount.accountAddress);
+};
+
+const loadingActivites = ref(false);
+const activities = ref<Activity[]>([]);
+const page = ref(1);
+const lastPage = ref(0);
+const totalActivities = ref(0);
+
+onMounted(async () => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+
+    getUser(keylessAccount);
+    getActivities(keylessAccount.accountAddress);
+});
 </script>
 
 <template>
@@ -21,7 +81,7 @@ import GcoinIcon from '@/components/icons/GcoinIcon.vue';
                     </div>
                     <div class="balance_item_value">
                         <GcoinIcon />
-                        <h3>1,392</h3>
+                        <h3>{{ toCurrency(unclaimed_earnings) }}</h3>
                     </div>
                     <span>≡ 2.47 APT</span>
                 </div>
@@ -33,7 +93,7 @@ import GcoinIcon from '@/components/icons/GcoinIcon.vue';
                     </div>
                     <div class="balance_item_value">
                         <GcoinIcon :color="'var(--tx-semi)'" />
-                        <h3>0.00</h3>
+                        <h3>{{ toCurrency(donated_earnings) }}</h3>
                     </div>
                     <span>≡ 0.00 APT</span>
                 </div>
@@ -41,41 +101,50 @@ import GcoinIcon from '@/components/icons/GcoinIcon.vue';
         </div>
 
         <div class="history_header">
-            <h3>My activities history</h3>
+            <h3>My activities history <span>({{ totalActivities }})</span></h3>
             <Button :text="'Claim Earnings'">
                 <ImportIcon />
             </Button>
         </div>
 
-        <table>
+        <div class="progress" v-if="loadingActivites">
+            <ProgressBox />
+        </div>
+
+        <table v-if="!loadingActivites">
             <thead>
                 <tr>
-                    <td>Txn. hash</td>
-                    <td>Weight in grams</td>
+                    <td>Via</td>
+                    <td>Weight (grams)</td>
                     <td>Reward</td>
                     <td>Timestamp</td>
                     <td></td>
                 </tr>
             </thead>
-            <tbody v-for="i in 5" :key="i">
+            <tbody v-for="activity, index in activities" :key="index">
                 <tr>
-                    <td>JK-{{ 9438 - i }}</td>
-                    <td>{{ 11 - i }}</td>
+                    <td>{{ activity.channel }}</td>
+                    <td>{{ activity.weight_in_gram }}</td>
                     <td>
                         <div class="coin">
                             <GcoinIcon />
-                            <p>238</p>
+                            <p>{{ toCurrency(activity.reward_amount) }}</p>
                         </div>
                     </td>
-                    <td>10 Mins ago</td>
+                    <td>{{ formatTime(activity.created_at) }}</td>
                     <td>
-                        <a href="" target="_blank">
+                        <a :href="`https://explorer.aptoslabs.com/txn/${activity.tx_hash}?network=testnet`"
+                            target="_blank">
                             <OutIcon />
                         </a>
                     </td>
                 </tr>
             </tbody>
         </table>
+
+        <div class="show_more" v-if="page < lastPage">
+            <button class="action" @click="showMoreActivites">Show more</button>
+        </div>
     </div>
 </template>
 
@@ -180,7 +249,7 @@ table {
 
 table tr {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 0.2fr;
+    grid-template-columns: 0.5fr 1fr 1fr 1fr 0.2fr;
 }
 
 table tr td:not(:first-child) {
@@ -194,18 +263,15 @@ thead td {
     color: var(--tx-semi);
 }
 
-tbody:nth-child(odd) {
-    background: var(--bg-dark)
-}
-
 tbody td {
     font-size: 14px;
     font-style: 500px;
     color: var(--tx-normal);
+    border-bottom: 1px solid var(--bg-darkest);
 }
 
 thead tr {
-    border-bottom: 1px solid var(--bg-darkest);
+    background: var(--bg-dark);
 }
 
 td {
@@ -231,5 +297,30 @@ td {
 .coin svg {
     width: 14px;
     height: 14px;
+}
+
+.show_more {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.show_more .action {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    background: none;
+    width: 120px;
+    height: 30px;
+    border: 1px solid var(--bg-darkest);
+    border-radius: 4px;
+    color: var(--tx-semi);
+}
+
+.progress {
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
 }
 </style>

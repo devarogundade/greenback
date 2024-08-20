@@ -7,20 +7,20 @@ import { Activity } from './database/schemas/activity';
 import { DisposeToMachineDto } from './database/dtos/machine';
 import { RequestCardDto } from './database/dtos/user';
 import { Paged } from './types';
-import { AptosContract } from './contracts/aptos-contract';
+import { GreenbackContract } from './contracts/greenback-contract';
 import { sendMail, Templates } from './mail';
 import { RFIDMaker } from './rfids';
 
-const TAKE_SIZE: number = 20;
+const TAKE_SIZE: number = 10;
 
 @Injectable()
 export class AppService {
-  private contract: AptosContract;
+  private contract: GreenbackContract;
 
   constructor(
     @InjectModel(Activity.name) private activityModel: Model<Activity>
   ) {
-    this.contract = new AptosContract();
+    this.contract = new GreenbackContract();
   }
 
   async requestCard(dto: RequestCardDto): Promise<boolean> {
@@ -29,10 +29,16 @@ export class AppService {
       // So we are hardcoding the delivery RFID card id to the user object.
 
       const card_id = await RFIDMaker.generateRFIDCard();
-      console.log(card_id);
 
-      const htmlBody = Templates.buildMailForCardCreate(dto.name, dto.location);
-      sendMail(dto.email, 'GreenBack RFID card ordered!.', htmlBody);
+      const tx_hash = await this.contract.updateUserCard(
+        dto.user_address,
+        card_id
+      );
+
+      if (!tx_hash) return false;
+
+      const htmlBody = Templates.buildMailForCardCreate(dto.name, dto.location, tx_hash);
+      sendMail(dto.email, 'GreenBack RFID card sent out!.', htmlBody);
 
       return true;
     } catch (error) {
@@ -43,10 +49,12 @@ export class AppService {
 
   async dispose(dto: DisposeToMachineDto): Promise<boolean> {
     try {
-      const user_address = dto.card_id;
+      const user_address = dto.user_address_or_card_id;
 
       const tx_hash = await this.contract.disposeToMachine(
-        dto.machine_id, user_address, dto.weight_in_gram
+        dto.machine_id,
+        user_address,
+        dto.weight_in_gram
       );
 
       if (!tx_hash) {
@@ -55,7 +63,6 @@ export class AppService {
       }
 
       const activity: Activity = {
-        _id: tx_hash,
         user_address,
         channel: dto.channel,
         reward_amount: 0,
