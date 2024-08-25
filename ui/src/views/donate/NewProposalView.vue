@@ -6,7 +6,7 @@ import { unpackDAO, createProposal } from '@/scripts/greenback-contracts';
 import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { collapseAddress } from '@/scripts/utils';
+import { collapseAddress, fromAptosUnits, toAptosUnits } from '@/scripts/utils';
 import { toDays } from '@/scripts/utils';
 import { useUserStore } from '@/stores/user-store';
 import type { DAO } from '@/types';
@@ -98,7 +98,7 @@ const submitProposal = async () => {
         proposal.value.title,
         proposal.value.description,
         proposal.value.image,
-        proposal.value.proposedAmount,
+        toAptosUnits(proposal.value.proposedAmount),
         parseInt(startTimeSecs)
     );
 
@@ -148,7 +148,7 @@ onMounted(() => {
                 <div class="dao_stat">
                     <h3>Min. voting power required</h3>
                     <div class="dao_stat_amount">
-                        <p>{{ dao.minRequiredProposerVotingPower }}</p>
+                        <p>{{ fromAptosUnits(dao.minRequiredProposerVotingPower) }}</p>
                     </div>
                 </div>
 
@@ -162,7 +162,7 @@ onMounted(() => {
                 <div class="dao_stat">
                     <h3>Resolve threshold</h3>
                     <div class="dao_stat_amount">
-                        <p>{{ dao.resolveThreshold }}</p>
+                        <p>{{ fromAptosUnits(dao.resolveThreshold) }}</p>
                     </div>
                 </div>
             </div>

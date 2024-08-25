@@ -7,7 +7,7 @@ import CoinIcon from '@/components/icons/CoinIcon.vue';
 import LovelyIcon from '@/components/icons/LovelyIcon.vue';
 import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import { useUserStore } from '@/stores/user-store';
-import { toCurrency } from '@/scripts/utils';
+import { toCurrency, fromAptosUnits } from '@/scripts/utils';
 import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
 import { KeylessAccount, AccountAddress } from "@aptos-labs/ts-sdk";
 import { getUserAccount } from '@/scripts/greenback-contracts';
@@ -81,7 +81,7 @@ onMounted(async () => {
                     </div>
                     <div class="balance_item_value">
                         <GcoinIcon />
-                        <h3>{{ toCurrency(unclaimedEarnings) }}</h3>
+                        <h3>{{ toCurrency(fromAptosUnits(unclaimedEarnings)) }}</h3>
                     </div>
                     <span>≡ 2.47 APT</span>
                 </div>
@@ -93,7 +93,7 @@ onMounted(async () => {
                     </div>
                     <div class="balance_item_value">
                         <GcoinIcon :color="'var(--tx-semi)'" />
-                        <h3>{{ toCurrency(donatedEarnings) }}</h3>
+                        <h3>{{ toCurrency(fromAptosUnits(donatedEarnings)) }}</h3>
                     </div>
                     <span>≡ 0.00 APT</span>
                 </div>
@@ -128,7 +128,7 @@ onMounted(async () => {
                     <td>
                         <div class="coin">
                             <GcoinIcon />
-                            <p>{{ toCurrency(activity.reward_amount) }}</p>
+                            <p>{{ toCurrency(fromAptosUnits(activity.reward_amount)) }}</p>
                         </div>
                     </td>
                     <td>{{ formatTime(activity.created_at) }}</td>

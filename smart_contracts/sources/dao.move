@@ -6,10 +6,8 @@ module greenback::dao {
     use std::string::{Self, String};
     use std::vector;
     use aptos_framework::account;
-    use aptos_framework::event;
     use aptos_framework::fungible_asset::{Self, Metadata};
     use aptos_framework::object::{Self, Object};
-    use aptos_framework::primary_fungible_store;
     use aptos_std::table::{Self, Table};
     use aptos_framework::account::{SignerCapability};
     use std::error;
@@ -367,12 +365,9 @@ module greenback::dao {
     ) {
         assert!(dao.available_amount > proposal.proposed_amount, E_LOW_FUNDS);
 
-        let fa_obj_constructor_ref = &object::create_object(dao.admin);
-        let admin_store = fungible_asset::create_store(fa_obj_constructor_ref, dao.gcoin);
-
         transfer_fungible_asset(
-            admin_store,
             dao.gcoin,
+            dao.admin,
             proposal.proposed_amount
         );
 

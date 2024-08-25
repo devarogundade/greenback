@@ -7,15 +7,17 @@ import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { collapseAddress } from '@/scripts/utils';
-import { toCurrency } from '@/scripts/utils';
+import { toCurrency, fromAptosUnits, getProposalState } from '@/scripts/utils';
 import type { DAO, Proposal } from '@/types';
+import { format as formatDate } from 'timeago.js';
 import ProgressBox from '@/components/ProgressBox.vue';
+import DaoDonate from '@/pops/DaoDonate.vue';
 
 const route = useRoute();
 
 const dao = ref<DAO | null>(null);
 const proposals = ref<Proposal[]>([]);
-
+const daoDonating = ref(false);
 const loading = ref(false);
 
 const getDAO = async () => {
@@ -24,7 +26,7 @@ const getDAO = async () => {
     if (dao.value) {
         const proposalIds = Array.from({
             length: dao.value.nextProposalId
-        }, (_, i) => i);
+        }, (_, i) => i + 1);
 
         getProposals(proposalIds);
     }
@@ -33,6 +35,10 @@ const getDAO = async () => {
 
 const getProposals = async (proposalIds: number[]) => {
     proposals.value = await getDAOProposals(route.params.id as string, proposalIds);
+};
+
+const getRatio = (a: number, b: number) => {
+    return Number(a / b).toFixed(0);
 };
 
 onMounted(() => {
@@ -61,9 +67,8 @@ onMounted(() => {
                         <CopyIcon :color="'var(--tx-semi)'" />
                     </div>
                 </div>
-                <RouterLink :to="`/app/donate/${$route.params.id}/create`">
-                    <Button :text="'New Proposal'" />
-                </RouterLink>
+
+                <Button @click="daoDonating = true" :text="'Donate'" />
             </div>
 
             <div class="dao_stats">
@@ -71,7 +76,7 @@ onMounted(() => {
                     <h3>Available amount</h3>
                     <div class="dao_stat_amount">
                         <GcoinIcon />
-                        <p>{{ toCurrency(dao.availableAmount) }}</p>
+                        <p>{{ toCurrency(fromAptosUnits(dao.availableAmount)) }}</p>
                     </div>
                 </div>
 
@@ -79,34 +84,37 @@ onMounted(() => {
                     <h3>Raised amount</h3>
                     <div class="dao_stat_amount">
                         <GcoinIcon />
-                        <p>{{ toCurrency(dao.raisedAmount) }}</p>
+                        <p>{{ toCurrency(fromAptosUnits(dao.raisedAmount)) }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="proposal_title">
                 <h3>Proposals ({{ proposals.length }})</h3>
+
+                <RouterLink :to="`/app/donate/${$route.params.id}/create`">
+                    <Button :text="'New Proposal'" />
+                </RouterLink>
             </div>
 
             <div class="proposals">
-                <div class="proposal" v-for="i in 4" :key="i">
+                <div class="proposal" v-for="proposal, index in proposals" :key="index">
                     <div class="proposal_status">
-                        <p class="proposal_time">9:45 PM - Dec 27</p>
-                        <div class="proposal_state">Ongoing</div>
+                        <p class="proposal_time">{{ formatDate(proposal.startTimeSec * 1000) }}</p>
+                        <div class="proposal_state">{{ getProposalState(proposal.resolution) }}</div>
                     </div>
 
                     <div class="proposal_info">
-                        <img src="/images/logo.png" alt="">
-                        <h3 class="title">A proposal to determine if the vGalx should be used to mint nfts.</h3>
-                        <p class="description">
-                            Lorem ipsum dolor sit amet consectetur. Lacus gravida ctumst orci
-                            quam orci. consleo pellentesque qu.....
-                        </p>
+                        <img :src="proposal.image" alt="">
+                        <h3 class="title">{{ proposal.title }}</h3>
+                        <p class="description">{{ proposal.description }}</p>
                     </div>
 
                     <div class="progress_info">
-                        <p>Yes, agreed. ~ 90%</p>
-                        <p>No, disagreed. ~ 10%</p>
+                        <p>Yes, agreed. ~ {{ getRatio(proposal.finalYesVotes, (proposal.finalYesVotes +
+                            proposal.finalNoVotes)) }}%</p>
+                        <p>No, disagreed. ~ {{ getRatio(proposal.finalNoVotes, (proposal.finalYesVotes +
+                            proposal.finalNoVotes)) }}%</p>
                     </div>
 
                     <div class="progress_bar">
@@ -116,16 +124,21 @@ onMounted(() => {
 
                     <div class="proposer">
                         <p><span>
-                                <GcoinIcon /> {{ toCurrency(0) }}
+                                <GcoinIcon /> {{ toCurrency(fromAptosUnits(proposal.proposedAmount)) }}
                             </span>
-                            ~ By TheCrazyCryptoGuy
+                            ~ By {{ collapseAddress(dao.daoAddress) }}
                         </p>
 
-                        <Button :text="'Vote'" />
+                        <div class="vote">
+                            <Button :text="'Yes'" />
+                            <Button :text="'No'" />
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <DaoDonate @close="daoDonating = false" v-if="dao && daoDonating" :daoAddress="dao.daoAddress" />
     </div>
 </template>
 
@@ -226,6 +239,9 @@ onMounted(() => {
 
 .proposal_title {
     margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .proposal_title h3 {
@@ -346,5 +362,12 @@ onMounted(() => {
 .proposer span {
     font-weight: 600;
     color: var(--tx-semi);
+}
+
+.vote {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
 }
 </style>

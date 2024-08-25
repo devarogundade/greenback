@@ -2,11 +2,12 @@ module greenback::main {
     // ============== Imports ============== //
 
     use std::signer;
-    use std::string::{Self, String};
+    use std::string::{String};
     use std::option::{Self, Option};
     use aptos_std::table::{Self, Table};
     use aptos_framework::object::{Self, Object};
-    use aptos_framework::fungible_asset::{Self, Metadata};
+    use aptos_framework::fungible_asset::{Metadata};
+    use aptos_token_objects::collection::{Collection};
 
     use greenback::assets::{transfer_fungible_asset};
     
@@ -40,8 +41,8 @@ module greenback::main {
         machines: Table<u64, Machine>,
         admin_address: Option<address>,
         gcoin: Option<Object<Metadata>>,
-        gcoupon: Option<Object<Metadata>>,
-        gnft: Option<Object<Metadata>>,
+        gcoupon: Option<Object<Collection>>,
+        gnft: Option<Object<Collection>>,
         gcoin_to_aptos: u64
     }
 
@@ -72,8 +73,8 @@ module greenback::main {
     public entry fun init_registry(
         admin: &signer,
         gcoin: Object<Metadata>,
-        gcoupon: Object<Metadata>,
-        gnft: Object<Metadata>,
+        gcoupon: Object<Collection>,
+        gnft: Object<Collection>,
     )  acquires Registry {
         let registry = borrow_global_mut<Registry>(@greenback);
 
@@ -121,10 +122,7 @@ module greenback::main {
 
         let claimed_amount = mul_div_internal(amount, registry.gcoin_to_aptos, DENOMINATOR);
 
-        let fa_obj_constructor_ref = &object::create_object(sender_address);
-        let sender_store = fungible_asset::create_store(fa_obj_constructor_ref, gcoin);
-
-        transfer_fungible_asset(sender_store, gcoin, claimed_amount);
+        transfer_fungible_asset(gcoin, sender_address, claimed_amount);
     }
 
     public entry fun mint_coupon(
@@ -133,7 +131,7 @@ module greenback::main {
         amount: u64
     ) acquires User, Registry {
         let registry = borrow_global<Registry>(@greenback);
-        let gcoin = *option::borrow(&registry.gcoin);     
+        let gcoupon = *option::borrow(&registry.gcoupon);     
 
         let sender_address = signer::address_of(sender);
         let user = borrow_global_mut<User>(sender_address);
@@ -141,12 +139,7 @@ module greenback::main {
         user.unclaimed_earnings = user.unclaimed_earnings - amount;
         user.withdrawn_earnings = user.withdrawn_earnings + amount;
 
-        let claimed_amount = mul_div_internal(amount, registry.gcoin_to_aptos, DENOMINATOR);
-
-        let fa_obj_constructor_ref = &object::create_object(sender_address);
-        let sender_store = fungible_asset::create_store(fa_obj_constructor_ref, gcoin);
-
-        transfer_fungible_asset(sender_store, gcoin, claimed_amount);
+        // mint_coupon_event();
     }
 
     // ============== Friend Functions ============== //
@@ -206,10 +199,8 @@ module greenback::main {
         let gnft = *option::borrow(&registry.gnft);     
 
         let user_address = object::object_address(&user_object);
-        let fa_obj_constructor_ref = &object::create_object(user_address);
-        let user_store = fungible_asset::create_store(fa_obj_constructor_ref, gnft);
 
-        transfer_fungible_asset(user_store, gnft, amount);
+        // mint_gnft_to_user_event();
     }
 
     public entry fun create_machine(

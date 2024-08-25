@@ -157,7 +157,7 @@ export async function vote(
     }
 }
 
-export async function donate(
+export async function donateDAO(
     keylessAccount: KeylessAccount,
     daoAddress: string,
     amount: number
@@ -240,7 +240,7 @@ export async function unpackProposal(
         const response = (await aptos.view({
             payload: {
                 function: `${VITE_CONTRACT_ID}::dao::unpack_proposal`,
-                functionArguments: [daoAddress, proposalId]
+                functionArguments: [proposalId, daoAddress]
             },
         }));
 

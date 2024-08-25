@@ -7,7 +7,7 @@ import type { DAO } from '@/types';
 import { daoAddresses } from '@/scripts/data';
 import { getDAOs as getDAOsImpl } from '@/scripts/greenback-contracts';
 import ProgressBox from '@/components/ProgressBox.vue';
-import { toCurrency } from '@/scripts/utils';
+import { toCurrency, fromAptosUnits } from '@/scripts/utils';
 
 const daos = ref<DAO[]>([]);
 const loading = ref(false);
@@ -66,7 +66,7 @@ onMounted(() => {
                         <p>Raised amount</p>
                         <div class="dao_raised_amount_info">
                             <GcoinIcon />
-                            <p> {{ toCurrency(dao.raisedAmount) }}</p>
+                            <p> {{ toCurrency(fromAptosUnits(dao.raisedAmount)) }}</p>
                         </div>
                     </div>
                 </div>
