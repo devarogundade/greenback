@@ -5,9 +5,23 @@ module greenback::events {
     use std::string::String;
     use aptos_framework::event;
 
+    friend greenback::main;
     friend greenback::dao;
 
     // ============== Structs ============== //
+    
+    #[event]
+    struct MintGNFT has drop, store {
+        user_address: address,
+        amount: u64
+    }
+
+    #[event]
+    struct MintCoupon has drop, store {
+        user_address: address,
+        coupon_id: u64,
+        amount: u64
+    }
 
     #[event]
     struct CreateDAO has drop, store {
@@ -62,6 +76,28 @@ module greenback::events {
     }
 
     // ============== Friend Functions ============== //
+
+    public(friend) fun mint_gnft_event(
+        user_address: address,
+        amount: u64
+    ) {
+        event::emit(MintGNFT {
+            user_address,
+            amount
+        });
+    }
+
+    public(friend) fun mint_coupon_event(
+        user_address: address,
+        coupon_id: u64,
+        amount: u64
+    ) {
+        event::emit(MintCoupon {
+            user_address,
+            coupon_id,
+            amount
+        });
+    }
 
     public(friend) fun emit_create_dao_event(
         dao_address: address,

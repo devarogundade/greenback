@@ -30,7 +30,11 @@ export const getProposalState = (value: number): string => {
     if (value == 0) {
         return 'Pending';
     } else if (value == 1) {
-        return 'Resolve';
+        return 'Resolved';
+    } else if (value == 2) {
+        return 'Resolved not passed';
+    } else if (value == 3) {
+        return 'Resolved by admin';
     }
 
     return 'Unknown';

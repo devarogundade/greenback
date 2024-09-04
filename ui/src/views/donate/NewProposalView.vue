@@ -11,10 +11,10 @@ import { toDays } from '@/scripts/utils';
 import { useUserStore } from '@/stores/user-store';
 import type { DAO } from '@/types';
 import Storage from '@/scripts/storage';
-import VueDatePicker from '@vuepic/vue-datepicker';
-import { useToast } from 'vue-toast-notification';
 import ProgressBox from '@/components/ProgressBox.vue';
+import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 
 const route = useRoute();

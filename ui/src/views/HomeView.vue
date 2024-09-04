@@ -11,7 +11,7 @@ import { daoAddresses } from '@/scripts/data';
 import { getDAOs as getDAOsImpl } from '@/scripts/greenback-contracts';
 import ChevronRight from '@/components/icons/ChevronRight.vue';
 import type { DAO } from '@/types';
-import { toCurrency } from '@/scripts/utils';
+import { toCurrency, fromAptosUnits } from '@/scripts/utils';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -188,7 +188,7 @@ onMounted(() => {
                       <p>Raised amount</p>
                       <div class="dao_raised_amount_info">
                         <GcoinIcon />
-                        <p> {{ toCurrency(dao.raisedAmount) }}</p>
+                        <p> {{ toCurrency(fromAptosUnits(dao.raisedAmount)) }}</p>
                       </div>
                     </div>
                   </div>

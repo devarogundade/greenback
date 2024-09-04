@@ -10,7 +10,8 @@ module greenback::main {
     use aptos_token_objects::collection::{Collection};
 
     use greenback::assets::{transfer_fungible_asset};
-    
+    use greenback::events;
+
     friend greenback::dao;
 
     // ============== Errors ============== //
@@ -37,8 +38,10 @@ module greenback::main {
 
     struct Registry has key {
         next_machine_id: u64,
+        next_coupon_id: u64,
         user_cards: Table<String, address>,
         machines: Table<u64, Machine>,
+        coupons: Table<u64, Coupon>,
         admin_address: Option<address>,
         gcoin: Option<Object<Metadata>>,
         gcoupon: Option<Object<Collection>>,
@@ -53,13 +56,21 @@ module greenback::main {
         active: bool
     }
 
+    struct Coupon has copy, drop, store {
+        name: String,
+        description: String,
+        amount: u64
+    }
+
     // ============== Init Function ============== //
 
     fun init_module(greenback: &signer) {
         let registry = Registry {
             next_machine_id: 0,
+            next_coupon_id: 0,
             user_cards: table::new(),
             machines: table::new(),
+            coupons: table::new(),
             admin_address: option::none(),
             gcoin: option::none(),
             gcoupon: option::none(),
@@ -127,19 +138,24 @@ module greenback::main {
 
     public entry fun mint_coupon(
         sender: &signer,
-        coupon_id: u64,
-        amount: u64
+        coupon_id: u64
     ) acquires User, Registry {
-        let registry = borrow_global<Registry>(@greenback);
+        let registry = borrow_global_mut<Registry>(@greenback);
         let gcoupon = *option::borrow(&registry.gcoupon);     
 
         let sender_address = signer::address_of(sender);
         let user = borrow_global_mut<User>(sender_address);
 
-        user.unclaimed_earnings = user.unclaimed_earnings - amount;
-        user.withdrawn_earnings = user.withdrawn_earnings + amount;
+        let coupon = *table::borrow(&mut registry.coupons, coupon_id);
 
-        // mint_coupon_event();
+        user.unclaimed_earnings = user.unclaimed_earnings - coupon.amount;
+        user.withdrawn_earnings = user.withdrawn_earnings + coupon.amount;
+
+        events::mint_coupon_event(
+            sender_address,
+            coupon_id,
+            1
+        );
     }
 
     // ============== Friend Functions ============== //
@@ -190,8 +206,7 @@ module greenback::main {
 
     public entry fun mint_gnft_to_user(
         admin: &signer,
-        user_object: Object<User>,
-        amount: u64
+        user_object: Object<User>
     ) acquires Registry {
         only_admin_internal(admin);
 
@@ -200,7 +215,10 @@ module greenback::main {
 
         let user_address = object::object_address(&user_object);
 
-        // mint_gnft_to_user_event();
+        events::mint_gnft_event(
+            user_address,
+            1
+        );
     }
 
     public entry fun create_machine(
@@ -222,6 +240,27 @@ module greenback::main {
 
         table::add(&mut registry.machines, machine_id, machine);
         registry.next_machine_id = machine_id;
+    }
+
+    public entry fun create_coupon(
+        admin: &signer,
+        name: String,
+        description: String,
+        amount: u64
+    ) acquires Registry {
+        only_admin_internal(admin);
+
+        let registry = borrow_global_mut<Registry>(@greenback);
+
+        let coupon = Coupon {
+            name,
+            description,
+            amount
+        };
+        let coupon_id = registry.next_coupon_id + 1;
+
+        table::add(&mut registry.coupons, coupon_id, coupon);
+        registry.next_coupon_id = coupon_id;
     }
 
     public entry fun update_user_card(
@@ -262,6 +301,8 @@ module greenback::main {
         machine_id: u64,
         total_gram: u64
     ) acquires User, Registry {
+        only_admin_internal(admin);
+
         let registry = borrow_global_mut<Registry>(@greenback);
         let machine = *table::borrow_mut(&mut registry.machines, machine_id);
 

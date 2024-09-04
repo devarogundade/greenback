@@ -2,7 +2,8 @@
 import Button from '@/components/buttons/Button.vue';
 import ChevronRight from '@/components/icons/ChevronRight.vue';
 import CopyIcon from '@/components/icons/CopyIcon.vue';
-import { unpackDAO, getDAOProposals } from '@/scripts/greenback-contracts';
+import { unpackDAO, getDAOProposals, voteDAO } from '@/scripts/greenback-contracts';
+import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
 import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -12,13 +13,18 @@ import type { DAO, Proposal } from '@/types';
 import { format as formatDate } from 'timeago.js';
 import ProgressBox from '@/components/ProgressBox.vue';
 import DaoDonate from '@/pops/DaoDonate.vue';
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 
 const route = useRoute();
+const keylessAccount = useKeylessAccounts().keylessAccount;
+const toast = useToast({ duration: 4000, position: 'top', dismissible: true });
 
 const dao = ref<DAO | null>(null);
 const proposals = ref<Proposal[]>([]);
 const daoDonating = ref(false);
 const loading = ref(false);
+const voting = ref(false);
 
 const getDAO = async () => {
     loading.value = true;
@@ -35,6 +41,27 @@ const getDAO = async () => {
 
 const getProposals = async (proposalIds: number[]) => {
     proposals.value = await getDAOProposals(route.params.id as string, proposalIds);
+};
+
+const vote = async (proposalId: number, voteOption: boolean) => {
+    if (voting.value) return;
+    if (!dao.value) return;
+    if (!keylessAccount || !keylessAccount.value) return;
+
+    const txHash = await voteDAO(
+        keylessAccount.value,
+        dao.value.daoAddress,
+        proposalId,
+        voteOption
+    );
+
+    if (txHash) {
+        toast.success('Vote casted.');
+    } else {
+        toast.success('Failed to cast vote.');
+    }
+
+    voting.value = false;
 };
 
 const getRatio = (a: number, b: number) => {
@@ -130,8 +157,8 @@ onMounted(() => {
                         </p>
 
                         <div class="vote">
-                            <Button :text="'Yes'" />
-                            <Button :text="'No'" />
+                            <Button @click="vote(index + 1, true)" :text="'Yes'" />
+                            <Button @click="vote(index + 1, false)" :text="'No'" />
                         </div>
                     </div>
                 </div>

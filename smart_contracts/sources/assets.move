@@ -133,7 +133,7 @@ module greenback::assets {
         let da_obj_addr = object::object_address(&da);
         let config = borrow_global_mut<DAController>(da_obj_addr);
         
-        let token_ref = token::create_named_token(
+        token::create_named_token(
             sender,
             config.collection_name,
             description,

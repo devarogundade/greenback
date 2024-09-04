@@ -33,7 +33,7 @@ module greenback::dao {
     const E_ALREADY_VOTED: u64 = 9;
     const E_PROPOSAL_RESOLVED: u64 = 11;
     const E_INVALID_ADMIN_ACCOUNT: u64 = 10;
-    const E_VOTING_STATISTICS_NOT_FOUND: u64 = 13;
+    const E_proposalISTICS_NOT_FOUND: u64 = 13;
     const E_LOW_FUNDS: u64 = 14;
 
     // ============== Constants ============== //
@@ -42,7 +42,6 @@ module greenback::dao {
     const PROPOSAL_RESOLVED_PASSED: u8 = 1;
     const PROPOSAL_RESOLVED_NOT_PASSED: u8 = 2;
     const PROPOSAL_RESOLVED_BY_ADMIN: u8 = 3;
-    const PROPOSAL_VETOED_BY_ADMIN: u8 = 4;
 
     // ============== Structs ============== //
 
@@ -67,19 +66,12 @@ module greenback::dao {
         proposed_amount: u64,
         start_time_sec: u64,
         resolution: u8,
-        final_yes_votes: u64,
-        final_no_votes: u64,
-    }
-
-    struct ProposalVotingStatistics has key {
-        proposals: Table<u64, VotingStatistics>,
-    }
-
-    struct VotingStatistics has store {
         total_yes: u64,
-        total_no: u64,
-        yes_votes: Table<address, u64>, 
-        no_votes: Table<address, u64>,
+        total_no: u64
+    }
+
+    struct ProposalVotes has key {
+        voting_power: u64
     }
 
     // ============== Entry Functions ============== //
@@ -113,13 +105,6 @@ module greenback::dao {
                 proposals: table::new(),
                 admin: admin_address
             },
-        );
-
-        move_to(
-            &res_signer,
-            ProposalVotingStatistics {
-                proposals: table::new()
-            }
         );
 
         let dao_address = signer::address_of(&res_signer);
@@ -169,8 +154,8 @@ module greenback::dao {
             proposed_amount,
             start_time_sec,
             resolution: PROPOSAL_PENDING,
-            final_yes_votes: 0,
-            final_no_votes: 0,
+            total_yes: 0,
+            total_no: 0,
         };
 
         let proposal_id = dao.next_proposal_id + 1;
@@ -195,46 +180,43 @@ module greenback::dao {
         dao_address: address,
         proposal_id: u64,
         vote: bool
-    ) acquires DAO, ProposalVotingStatistics {
+    ) acquires DAO {
         assert!(exists<DAO>(dao_address), error::not_found(E_DAO_NOT_EXIST));
+        
+        let seed = bcs::to_bytes(&dao_address);
+        vector::append(&mut seed, bcs::to_bytes(&proposal_id));
+        let (res_signer,_) = account::create_resource_account(sender, seed);
+
+        // check if this token already voted
+        let res_signer_addr = signer::address_of(&res_signer);
+        assert!(exists<ProposalVotes>(res_signer_addr), error::invalid_argument(E_ALREADY_VOTED));
 
         let dao = borrow_global_mut<DAO>(dao_address);
 
         // assert the proposal hasn't ended, voter can can only vote for the proposal that starts and hasn't ended
         assert!(table::contains(&dao.proposals, proposal_id), error::not_found(E_PROPOSAL_NOT_FOUND));
-        let proposal = table::borrow(&dao.proposals, proposal_id);
+        let proposal = table::borrow_mut(&mut dao.proposals, proposal_id);
         let now = timestamp::now_seconds();
         assert!(now < proposal.start_time_sec + dao.voting_duration, error::invalid_argument(E_PROPOSAL_ENDED));
         assert!(now > proposal.start_time_sec, error::invalid_argument(E_PROPOSAL_NOT_STARTED));
 
-        let prop_stats = borrow_global_mut<ProposalVotingStatistics>(dao_address);
-
-        // initialize the voting statistics of the proposal
-        if (!table::contains(&prop_stats.proposals, proposal_id)) {
-            let vstat = VotingStatistics {
-                total_yes: 0,
-                total_no: 0,
-                yes_votes: table::new(),
-                no_votes: table::new(),
-            };
-            table::add(&mut prop_stats.proposals, proposal_id, vstat);
-        };
-        let stats = table::borrow_mut(&mut prop_stats.proposals, proposal_id);
-
         let voter_address = signer::address_of(sender);
-
-        // check if this token already voted
-        assert!(!table::contains(&stats.no_votes, voter_address), error::invalid_argument(E_ALREADY_VOTED));
-        assert!(!table::contains(&stats.yes_votes, voter_address), error::invalid_argument(E_ALREADY_VOTED));
 
         let voting_power = get_voting_power(voter_address);
 
+        assert!(voting_power > 0, E_LOW_FUNDS);
+
+        move_to(
+            &res_signer,
+            ProposalVotes {
+                voting_power
+            }
+        );
+
         if (vote) {
-            stats.total_yes = stats.total_yes + 1;
-            table::add(&mut stats.yes_votes, voter_address, voting_power);
+            proposal.total_yes = proposal.total_yes + 1;
         } else {
-            stats.total_no = stats.total_no + 1;
-            table::add(&mut stats.no_votes, voter_address, voting_power);
+            proposal.total_no = proposal.total_no + 1;
         };
 
         events::emit_voting_event(
@@ -248,7 +230,7 @@ module greenback::dao {
     public entry fun resolve(
         proposal_id: u64, 
         dao_address: address
-    ) acquires DAO, ProposalVotingStatistics {
+    ) acquires DAO {
         assert!(exists<DAO>(dao_address), error::not_found(E_DAO_NOT_EXIST));
         let dao = borrow_global<DAO>(dao_address);
 
@@ -288,7 +270,7 @@ module greenback::dao {
         proposal_id: u64, 
         dao_address: address, 
         reason: String
-    ) acquires DAO, ProposalVotingStatistics {
+    ) acquires DAO {
         let resolver = signer::address_of(admin);
 
         let dao = borrow_global<DAO>(dao_address);
@@ -314,7 +296,7 @@ module greenback::dao {
     fun resolve_internal(
         resolver: Option<address>,
         proposal_id: u64, dao_address: address
-    ) acquires DAO, ProposalVotingStatistics {
+    ) acquires DAO {
         let dao = borrow_global_mut<DAO>(dao_address);
 
         // assert the proposal voting ended
@@ -330,21 +312,14 @@ module greenback::dao {
             return
         };
 
-        assert!(exists<ProposalVotingStatistics>(dao_address), error::not_found(E_VOTING_STATISTICS_NOT_FOUND));
-      
-        let proposal_stat = &mut borrow_global_mut<ProposalVotingStatistics>(dao_address).proposals;
-        let voting_stat = table::borrow_mut(proposal_stat, proposal_id);
-        proposal.final_yes_votes = voting_stat.total_yes;
-        proposal.final_no_votes = voting_stat.total_no;
-
         // validate resolve threshold and result
-        let voted = voting_stat.total_no + voting_stat.total_yes;
+        let voted = proposal.total_no + proposal.total_yes;
 
         if (voted < dao.resolve_threshold) {
             // not sufficient voting power
             proposal.resolution = PROPOSAL_RESOLVED_NOT_PASSED;
         } 
-        else if(voting_stat.total_yes > voting_stat.total_no) {
+        else if(proposal.total_yes > proposal.total_no) {
             execute_proposal(proposal, dao);
             proposal.resolution = PROPOSAL_RESOLVED_PASSED;
         } 
@@ -414,8 +389,8 @@ module greenback::dao {
             proposal.proposed_amount,
             proposal.start_time_sec,
             proposal.resolution,
-            proposal.final_yes_votes,
-            proposal.final_no_votes
+            proposal.total_yes,
+            proposal.total_no
         )
     }
 } 

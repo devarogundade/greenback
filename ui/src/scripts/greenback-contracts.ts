@@ -124,7 +124,7 @@ export async function createProposal(
     }
 }
 
-export async function vote(
+export async function voteDAO(
     keylessAccount: KeylessAccount,
     daoAddress: string,
     proposalId: number,
