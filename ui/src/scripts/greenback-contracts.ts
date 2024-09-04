@@ -209,8 +209,12 @@ export async function getDAOs(daoAddresses: string[]): Promise<DAO[]> {
         unpackDAO(daoAddress)
     ));
 
-    const daos = await Promise.all(promises);
-    return daos.filter(dao => dao != null);
+    const result = await Promise.all(promises);
+
+    // @ts-ignore
+    const daos: DAO[] = result.filter(dao => dao != null);
+
+    return daos;
 }
 
 export async function getDAOProposals(
@@ -224,8 +228,12 @@ export async function getDAOProposals(
             unpackProposal(daoAddress, proposalId)
         ));
 
-        const proposals = await Promise.all(promises);
-        return proposals.filter(proposal => proposal != null);
+        const result = await Promise.all(promises);
+
+        // @ts-ignore
+        const proposals: Proposal[] = result.filter(proposal => proposal != null);
+
+        return proposals;
     } catch (error) {
         console.log(error);
         return [];

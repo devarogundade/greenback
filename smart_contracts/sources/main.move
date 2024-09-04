@@ -9,7 +9,7 @@ module greenback::main {
     use aptos_framework::fungible_asset::{Metadata};
     use aptos_token_objects::collection::{Collection};
 
-    use greenback::assets::{transfer_fungible_asset};
+    use greenback::assets;
     use greenback::events;
 
     friend greenback::dao;
@@ -133,7 +133,11 @@ module greenback::main {
 
         let claimed_amount = mul_div_internal(amount, registry.gcoin_to_aptos, DENOMINATOR);
 
-        transfer_fungible_asset(gcoin, sender_address, claimed_amount);
+        assets::transfer_fungible_asset(
+            gcoin, 
+            sender_address, 
+            claimed_amount
+        );
     }
 
     public entry fun mint_coupon(
@@ -141,7 +145,6 @@ module greenback::main {
         coupon_id: u64
     ) acquires User, Registry {
         let registry = borrow_global_mut<Registry>(@greenback);
-        let gcoupon = *option::borrow(&registry.gcoupon);     
 
         let sender_address = signer::address_of(sender);
         let user = borrow_global_mut<User>(sender_address);
@@ -206,18 +209,45 @@ module greenback::main {
 
     public entry fun mint_gnft_to_user(
         admin: &signer,
-        user_object: Object<User>
+        description: String,
+        name: String,
+        token_uri: String,
+        user_address: address
     ) acquires Registry {
         only_admin_internal(admin);
 
         let registry = borrow_global_mut<Registry>(@greenback);
         let gnft = *option::borrow(&registry.gnft);     
 
-        let user_address = object::object_address(&user_object);
+        assets::mint_digital_asset(
+            admin,
+            gnft,
+            description,
+            name,
+            token_uri,
+            user_address
+        );
+    }
 
-        events::mint_gnft_event(
-            user_address,
-            1
+    public entry fun mint_gcoupon_to_user(
+        admin: &signer,
+        description: String,
+        name: String,
+        token_uri: String,
+        user_address: address
+    ) acquires Registry {
+        only_admin_internal(admin);
+
+        let registry = borrow_global_mut<Registry>(@greenback);
+        let gcoupon = *option::borrow(&registry.gcoupon);     
+
+        assets::mint_digital_asset(
+            admin,
+            gcoupon,
+            description,
+            name,
+            token_uri,
+            user_address
         );
     }
 

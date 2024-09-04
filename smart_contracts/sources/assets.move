@@ -122,19 +122,19 @@ module greenback::assets {
     }
 
     public entry fun mint_digital_asset(
-        sender: &signer,
+        admin: &signer,
         da: Object<Collection>,
         description: String,
         name: String,
         token_uri: String,
         user_address: address,
     ) acquires DAController {
-        let sender_addr = signer::address_of(sender);
+        let admin_addr = signer::address_of(admin);
         let da_obj_addr = object::object_address(&da);
         let config = borrow_global_mut<DAController>(da_obj_addr);
         
         token::create_named_token(
-            sender,
+            admin,
             config.collection_name,
             description,
             name,
@@ -143,14 +143,14 @@ module greenback::assets {
         );
 
         let token_addr = token::create_token_address(
-            &sender_addr,
+            &admin_addr,
             &config.collection_name,
             &name
         );
 
         let token_obj = object::address_to_object<Token>(token_addr);
 
-        object::transfer(sender, token_obj, user_address);
+        object::transfer(admin, token_obj, user_address);
     }
 
     // ============== Friend Functions ============== //
