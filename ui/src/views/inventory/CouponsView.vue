@@ -1,9 +1,26 @@
 <script setup lang="ts">
 import Button from '@/components/buttons/Button.vue';
 import MintCoupon from '@/pops/MintCoupon.vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import type { GCOUPON } from '@/types';
+import { getUserGCoupons } from '@/scripts/nodit';
+import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { AccountAddress } from "@aptos-labs/ts-sdk";
 
 const mintingPrompt = ref<boolean>(false);
+
+const gcoupons = ref<GCOUPON[]>([]);
+
+const getGNFTs = async (accountAddress: AccountAddress) => {
+    gcoupons.value = await getUserGCoupons(accountAddress);
+};
+
+onMounted(() => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+
+    getGNFTs(keylessAccount.accountAddress);
+});
 </script>
 
 <template>

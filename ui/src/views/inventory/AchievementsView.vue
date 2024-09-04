@@ -1,8 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { gnfts } from '@/scripts/data';
+import { ref, onMounted } from 'vue';
+import type { GNFT } from '@/types';
+import { getUserGNFTs } from '@/scripts/nodit';
+import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { AccountAddress } from "@aptos-labs/ts-sdk";
 
-const gnftBalance = ref<number>(3);
+const gnfts = ref<GNFT[]>([]);
+
+const getGNFTs = async (accountAddress: AccountAddress) => {
+    gnfts.value = await getUserGNFTs(accountAddress);
+};
+
+onMounted(() => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+
+    getGNFTs(keylessAccount.accountAddress);
+});
 </script>
 
 <template>
@@ -13,8 +27,7 @@ const gnftBalance = ref<number>(3);
             </div>
 
             <div class="gnfts">
-                <div v-for="gnft, index in gnfts" :key="index"
-                    :class="index < gnftBalance ? 'gnft' : 'gnft gnft_disabled'">
+                <div class="gnft" v-for="gnft, index in gnfts" :key="index">
                     <img :src="gnft.image" :alt="gnft.name">
                     <div class="name">{{ gnft.name }}</div>
                 </div>
@@ -53,11 +66,6 @@ const gnftBalance = ref<number>(3);
     overflow: hidden;
     position: relative;
     cursor: pointer;
-}
-
-.gnft_disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
 }
 
 .gnft img {
