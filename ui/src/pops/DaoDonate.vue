@@ -3,7 +3,7 @@ import CloseIcon from '@/components/icons/CloseIcon.vue';
 import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import Button from '@/components/buttons/Button.vue';
 import { donateDAO } from '@/scripts/greenback-contracts';
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { toCurrency, toAptosUnits } from '@/scripts/utils';
 import { useUserStore } from '@/stores/user-store';
 import { ref } from 'vue';

@@ -3,7 +3,7 @@
 
 import { KeylessAccount } from "@aptos-labs/ts-sdk";
 import { isValidEphemeralKeyPair } from "./ephemeral";
-import { decodeIdToken, isValidIdToken } from "./idToken";
+import { decodeIdToken, isValidIdToken } from "./id-token";
 
 /**
  * Encoding for the KeylessAccount class to be stored in localStorage

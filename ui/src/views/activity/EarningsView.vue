@@ -8,7 +8,7 @@ import LovelyIcon from '@/components/icons/LovelyIcon.vue';
 import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import { useUserStore } from '@/stores/user-store';
 import { toCurrency, fromAptosUnits } from '@/scripts/utils';
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { KeylessAccount, AccountAddress } from "@aptos-labs/ts-sdk";
 import { getUserAccount } from '@/scripts/greenback-contracts';
 import { getUserActivities } from '@/scripts/greenback-server';

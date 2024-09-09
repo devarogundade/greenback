@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { createEphemeralKeyPair } from './ephemeral';
-import { useKeylessAccounts } from './useKeylessAccounts';
+import { useKeylessAccounts } from './keyless-accounts';
 import type { EphemeralKeyPair } from '@aptos-labs/ts-sdk';
 
 export default function useEphemeralKeyPair() {

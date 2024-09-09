@@ -4,7 +4,7 @@ import MintCoupon from '@/pops/MintCoupon.vue';
 import { ref, onMounted } from 'vue';
 import type { GCOUPON } from '@/types';
 import { getUserGCoupons } from '@/scripts/nodit';
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { AccountAddress } from "@aptos-labs/ts-sdk";
 
 const mintingPrompt = ref<boolean>(false);

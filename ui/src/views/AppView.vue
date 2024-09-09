@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import Button from '@/components/buttons/Button.vue';
 import SideBar from '@/components/SideBar.vue';
-import useEphemeralKeyPair from "@/scripts/useEphemeralKeyPair";
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import useEphemeralKeyPair from "@/scripts/ephemeral-keypair";
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { watch } from 'vue';
 import { useUserStore } from '@/stores/user-store';
 import { getAccountAPTAmount, fundAccount } from '@/scripts/aptos-utils';

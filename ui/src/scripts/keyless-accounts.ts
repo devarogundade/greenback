@@ -6,7 +6,7 @@ import {
     type ProofFetchStatus,
 } from '@aptos-labs/ts-sdk';
 import { LocalStorageKeys, aptos } from '@/scripts/constants';
-import { validateIdToken } from '@/scripts/idToken';
+import { validateIdToken } from '@/scripts/id-token';
 import {
     EphemeralKeyPairEncoding,
     isValidEphemeralKeyPair,

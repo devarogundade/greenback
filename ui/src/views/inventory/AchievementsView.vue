@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import type { GNFT } from '@/types';
 import { getUserGNFTs } from '@/scripts/nodit';
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { AccountAddress } from "@aptos-labs/ts-sdk";
 
 const gnfts = ref<GNFT[]>([]);

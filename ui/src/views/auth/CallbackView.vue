@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import ProgressBox from '@/components/ProgressBox.vue';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';

@@ -3,7 +3,7 @@ import Button from '@/components/buttons/Button.vue';
 import CheckBox from '@/components/buttons/CheckBox.vue';
 import { onMounted, ref } from 'vue';
 import type { RequestCardForm } from '@/types';
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { getUserAccount } from '@/scripts/greenback-contracts';
 import { requestCard } from '@/scripts/greenback-server';
 import { useUserStore } from '@/stores/user-store';

@@ -3,7 +3,7 @@ import Button from '@/components/buttons/Button.vue';
 import ChevronRight from '@/components/icons/ChevronRight.vue';
 import CopyIcon from '@/components/icons/CopyIcon.vue';
 import { unpackDAO, createProposal } from '@/scripts/greenback-contracts';
-import { useKeylessAccounts } from '@/scripts/useKeylessAccounts';
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { collapseAddress, fromAptosUnits, toAptosUnits } from '@/scripts/utils';
