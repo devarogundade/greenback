@@ -26,7 +26,7 @@ const char *ssid = "Ibrahim";
 const char *password = "WifiPassword";
 
 // Server endpoint
-const char *serverUrl = "https://server.thegreenback.xyz/dispose_to_machine";
+const char *serverUrl = "https://server.thegreenback.xyz/dispose-to-machine-via-card";
 
 // Variables for RFID card ID
 String rfidUID = "";

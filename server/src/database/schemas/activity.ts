@@ -7,8 +7,11 @@ import { DisposeChannel } from 'src/types';
 export type ActivityDocument = HydratedDocument<Activity>;
 @Schema()
 export class Activity {
-    @Prop({ required: true })
-    user_address: string;
+    @Prop({ required: false })
+    user_address: string | undefined;
+
+    @Prop({ required: false })
+    card_id: string | undefined;
 
     @Prop({ required: true })
     weight_in_gram: number;

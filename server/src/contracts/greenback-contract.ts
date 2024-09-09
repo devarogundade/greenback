@@ -55,6 +55,110 @@ export class GreenbackContract {
         }
     }
 
+    async disposeToMachineViaRFIDCard(
+        machineId: number,
+        cardId: string,
+        totalGram: number
+    ): Promise<string | null> {
+        try {
+            const aptos = new Aptos(this.config);
+
+            const transaction = await aptos.transaction.build.simple({
+                sender: this.signer.accountAddress,
+                data: {
+                    function: `${process.env.CONTRACT_ID}::main::dispose_to_machine_via_card`,
+                    functionArguments: [
+                        cardId,
+                        machineId,
+                        totalGram
+                    ]
+                },
+            });
+
+            const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
+                signer: this.signer,
+                transaction
+            });
+
+            return tx_hash;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    }
+
+    async mintGNftToUser(
+        description: string,
+        name: string,
+        tokenURI: string,
+        userAddress: string
+    ): Promise<string | null> {
+        try {
+            const aptos = new Aptos(this.config);
+
+            const userAccountAddress = AccountAddress.fromString(userAddress);
+
+            const transaction = await aptos.transaction.build.simple({
+                sender: this.signer.accountAddress,
+                data: {
+                    function: `${process.env.CONTRACT_ID}::main::mint_gnft_to_user`,
+                    functionArguments: [
+                        description,
+                        name,
+                        tokenURI,
+                        userAccountAddress
+                    ]
+                },
+            });
+
+            const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
+                signer: this.signer,
+                transaction
+            });
+
+            return tx_hash;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    };
+
+    async mintGCouponToUser(
+        description: string,
+        name: string,
+        tokenURI: string,
+        userAddress: string
+    ): Promise<string | null> {
+        try {
+            const aptos = new Aptos(this.config);
+
+            const userAccountAddress = AccountAddress.fromString(userAddress);
+
+            const transaction = await aptos.transaction.build.simple({
+                sender: this.signer.accountAddress,
+                data: {
+                    function: `${process.env.CONTRACT_ID}::main::mint_gcoupon_to_user`,
+                    functionArguments: [
+                        description,
+                        name,
+                        tokenURI,
+                        userAccountAddress
+                    ]
+                },
+            });
+
+            const { hash: tx_hash } = await aptos.signAndSubmitTransaction({
+                signer: this.signer,
+                transaction
+            });
+
+            return tx_hash;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    };
+
     async updateUserCard(
         userAddress: string,
         cardId: string
