@@ -99,16 +99,19 @@ void loop()
 
         // Display welcome message
         lcd.clear();
-        lcd.setCursor(0, 0);
+        lcd.setCursor(2, 0);
         lcd.print("Welcome to");
-        lcd.setCursor(0, 1);
+        lcd.setCursor(3, 1);
         lcd.print("GreenBack");
 
         delay(2000);
 
         // Prompt to insert bottle
         lcd.clear();
-        lcd.print("Insert your bottle");
+        lcd.setCursor(2, 0);
+        lcd.print("Insert your");
+        lcd.setCursor(5, 1);
+        lcd.print("bottle");
 
         delay(5000);
 
@@ -139,12 +142,14 @@ void loop()
         digitalWrite(GREEN_LED, LOW);
 
         lcd.clear();
+        lcd.setCursor(2, 0);
         lcd.print("Thank you!");
 
         delay(2000);
 
         // Reset LCD message
         lcd.clear();
+        lcd.setCursor(0, 0);
         lcd.print("GreenBack Ready");
     }
 }
