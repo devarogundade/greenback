@@ -28,7 +28,7 @@ onMounted(() => {
 
             <div class="gnfts">
                 <div class="gnft" v-for="gnft, index in gnfts" :key="index">
-                    <img :src="gnft.image" :alt="gnft.name">
+                    <img :src="gnft.token_uri" :alt="gnft.name">
                     <div class="name">{{ gnft.name }}</div>
                 </div>
             </div>

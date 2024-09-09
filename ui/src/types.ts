@@ -17,13 +17,13 @@ export type CouponProvider = {
 export type GNFT = {
     name: string;
     description: string;
-    image: string;
+    token_uri: string;
 };
 
 export type GCOUPON = {
     name: string;
     description: string;
-    image: string;
+    token_uri: string;
 };
 
 export type DAO = {
