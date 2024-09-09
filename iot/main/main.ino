@@ -1,152 +1,150 @@
-// #include <SoftwareSerial.h>
-// #include <Wire.h>
-// #include <LiquidCrystal_I2C.h>
-// #include <Stepper.h>
-// #include <SPI.h>
-// #include <MFRC522.h>
-// #include "HX711.h"
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <Servo.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <MFRC522.h>
 
-// // Pin definitions for Arduino Uno
-// #define RFID_SS_PIN 10 // Pin 10
-// #define RFID_RST_PIN 9 // Pin 9
-// #define STEPPER_PIN1 4 // Pin 4
-// #define STEPPER_PIN2 5 // Pin 5
-// #define STEPPER_PIN3 6 // Pin 6
-// #define STEPPER_PIN4 7 // Pin 7
-// #define HX711_DT_PIN A1 // Pin A1
-// #define HX711_SCK_PIN A0 // Pin A0
-// #define LED_PIN 8 // Pin 8
-// #define GREEN_LED_PIN 11 // Pin 11
-// #define RED_LED_PIN 12 // Pin 12
-// #define COLOR_S0 A2 // Pin A2
-// #define COLOR_S1 A3 // Pin A3
-// #define COLOR_S2 A4 // Pin A4
-// #define COLOR_S3 A5 // Pin A5
-// #define COLOR_OUT 2 // Pin 2
+// Pins for components
+#define SS_PIN D4    // RFID SS pin
+#define RST_PIN D3   // RFID RST pin
+#define SERVO_PIN D1 // Servo motor pin
+#define GREEN_LED D5 // Green LED pin
+#define RED_LED D6   // Red LED pin
 
-// // RFID and Load cell
-// MFRC522 mfrc522(RFID_SS_PIN, RFID_RST_PIN);
-// HX711 scale;
+// RFID setup
+MFRC522 rfid(SS_PIN, RST_PIN);
 
-// // LCD
-// LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Servo setup
+Servo servoMotor;
 
-// // Stepper motor
-// const int stepsPerRevolution = 2048;
-// Stepper stepper(stepsPerRevolution, STEPPER_PIN1, STEPPER_PIN2, STEPPER_PIN3, STEPPER_PIN4);
+// LCD setup (16x2 display, I2C address 0x27)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// // Serial communication with ESP32
-// SoftwareSerial espSerial(2, 3); // RX, TX
+// WiFi credentials
+const char *ssid = "Ibrahim";
+const char *password = "WifiPassword";
 
-// // Color sensor
-// int red, green, blue;
-// const int whiteThreshold = 100; // Adjust based on testing
+// Server endpoint
+const char *serverUrl = "https://server.thegreenback.xyz/dispose_to_machine";
 
-// void setup() {
-//   Serial.begin(9600);
-//   espSerial.begin(9600); // Communication with ESP32-CAM
-//   SPI.begin();
-//   mfrc522.PCD_Init();
+// Variables for RFID card ID
+String rfidUID = "";
 
-//   lcd.init();
-//   lcd.backlight();
+// Function to send POST request
+void sendPostRequest(String id)
+{
+    WiFiClient client;
+    HTTPClient http;
 
-//   stepper.setSpeed(10);
+    http.begin(client, serverUrl);
+    http.addHeader("Content-Type", "application/json");
 
-//   pinMode(LED_PIN, OUTPUT);
-//   pinMode(GREEN_LED_PIN, OUTPUT);
-//   pinMode(RED_LED_PIN, OUTPUT);
-//   pinMode(COLOR_S0, OUTPUT);
-//   pinMode(COLOR_S1, OUTPUT);
-//   pinMode(COLOR_S2, OUTPUT);
-//   pinMode(COLOR_S3, OUTPUT);
-//   pinMode(COLOR_OUT, INPUT);
+    String jsonData = "{\"rfid_id\": \"" + id + "\"}";
 
-//   // Set color sensor scaling
-//   digitalWrite(COLOR_S0, HIGH);
-//   digitalWrite(COLOR_S1, LOW);
+    int httpResponseCode = http.POST(jsonData);
+    if (httpResponseCode > 0)
+    {
+        Serial.println("POST sent successfully.");
+    }
+    else
+    {
+        Serial.println("Error sending POST.");
+    }
 
-//   // Initialize load cell
-//   scale.begin(HX711_DT_PIN, HX711_SCK_PIN);
+    http.end();
+}
 
-//   lcd.setCursor(0, 0);
-//   lcd.print("Smart Bin Ready");
-// }
+void setup()
+{
+    Serial.begin(115200);
 
-// void loop() {
-//   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
-//     String rfidId = "";
-//     for (byte i = 0; i < mfrc522.uid.size; i++) {
-//       rfidId += String(mfrc522.uid.uidByte[i], HEX);
-//     }
-//     handleRFID(rfidId);
-//   }
+    // Initialize components
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.println("Connecting to WiFi...");
+    }
+    Serial.println("Connected to WiFi");
 
-//   // Additional operations
-// }
+    SPI.begin();     // Initialize SPI bus
+    rfid.PCD_Init(); // Initialize RFID
 
-// void handleRFID(String rfidId) {
-//   lcd.clear();
-//   lcd.setCursor(0, 0);
-//   lcd.print("RFID Detected");
+    lcd.init();      // Initialize LCD
+    lcd.backlight(); // Turn on backlight
 
-//   stepper.step(stepsPerRevolution);
-//   delay(5000); // Adjust delay as needed
+    pinMode(GREEN_LED, OUTPUT);
+    pinMode(RED_LED, OUTPUT);
 
-//   float weight = scale.get_units(10);
-//   if (weight > 0) {
-//     digitalWrite(LED_PIN, HIGH);
-//     readColor();
+    servoMotor.attach(SERVO_PIN);
+    servoMotor.write(0); // Servo at 0 degrees
 
-//     if (isWhite()) {
-//       sendDataToESP32(weight, rfidId, "RFID");
-//       digitalWrite(GREEN_LED_PIN, HIGH);
-//       digitalWrite(RED_LED_PIN, LOW);
-//     } else {
-//       digitalWrite(GREEN_LED_PIN, LOW);
-//       digitalWrite(RED_LED_PIN, HIGH);
-//     }
+    lcd.clear();
+    lcd.print("GreenBack Ready");
+}
 
-//     lcd.clear();
-//     lcd.setCursor(0, 0);
-//     lcd.print("Weight: ");
-//     lcd.setCursor(8, 0);
-//     lcd.print(weight);
-//     lcd.print(" g");
+void loop()
+{
+    if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial())
+    {
+        rfidUID = "";
+        for (byte i = 0; i < rfid.uid.size; i++)
+        {
+            rfidUID += String(rfid.uid.uidByte[i], HEX);
+        }
 
-//     digitalWrite(LED_PIN, LOW);
-//   } else {
-//     lcd.clear();
-//     lcd.setCursor(0, 0);
-//     lcd.print("Closing");
-//     delay(2000);
-//   }
+        Serial.print("RFID Card detected: ");
+        Serial.println(rfidUID);
 
-//   stepper.step(-stepsPerRevolution);
-//   delay(5000);
-// }
+        // Display welcome message
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Welcome to");
+        lcd.setCursor(0, 1);
+        lcd.print("GreenBack");
 
-// void readColor() {
-//   digitalWrite(COLOR_S2, LOW);
-//   digitalWrite(COLOR_S3, LOW);
-//   red = pulseIn(COLOR_OUT, LOW);
+        delay(2000);
 
-//   digitalWrite(COLOR_S3, HIGH);
-//   green = pulseIn(COLOR_OUT, LOW);
+        // Prompt to insert bottle
+        lcd.clear();
+        lcd.print("Insert your bottle");
 
-//   digitalWrite(COLOR_S2, HIGH);
-//   blue = pulseIn(COLOR_OUT, LOW);
+        delay(5000);
 
-//   Serial.print("R: "); Serial.print(red);
-//   Serial.print(" G: "); Serial.print(green);
-//   Serial.print(" B: "); Serial.println(blue);
-// }
+        // Commented: ESP32-CAM object recognition part
+        /*
+        if (!isPlasticBottle()) {
+          lcd.clear();
+          lcd.print("Not a bottle");
+          digitalWrite(RED_LED, HIGH);
+          delay(3000);
+          digitalWrite(RED_LED, LOW);
+          return;
+        }
+        */
 
-// bool isWhite() {
-//   return (red < whiteThreshold && green < whiteThreshold && blue < whiteThreshold);
-// }
+        // Bottle recognized, proceed
+        servoMotor.write(90); // Move servo to throw the bottle
+        delay(2000);          // Wait for the bottle to drop
+        servoMotor.write(0);  // Move servo back to original position
 
-// void sendDataToESP32(float weight, String rfidId, String idSource) {
-//   String data = "weight:" + String(weight) + ",rfidId:" + rfidId + ",idSource:" + idSource;
-//   espSerial.println(data);
-// }
+        // Send post request with RFID ID
+        sendPostRequest(rfidUID);
+
+        // Turn on green LED for success
+        digitalWrite(GREEN_LED, HIGH);
+        delay(3000);
+
+        digitalWrite(GREEN_LED, LOW);
+
+        lcd.clear();
+        lcd.print("Thank you!");
+
+        delay(2000);
+
+        // Reset LCD message
+        lcd.clear();
+        lcd.print("GreenBack Ready");
+    }
+}
