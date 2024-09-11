@@ -45,8 +45,8 @@ const donate = async () => {
 
     if (txHash) {
         toast.success('Donation sent.');
-        emit('close');
         emit('refresh');
+        emit('close');
     } else {
         toast.error('Failed to donate');
     }
