@@ -33,7 +33,9 @@ const getUser = async (keylessAccount: KeylessAccount) => {
 
 const getActivities = async (accountAddress: AccountAddress) => {
     loadingActivites.value = page.value == 1;
-    const result = await getUserActivities(accountAddress, page.value);
+
+    const cardId = useUserStore().cardId;
+    const result = await getUserActivities(accountAddress, cardId.value, page.value);
     if (result && result.data) {
         activities.value = [...activities.value, ...result.data];
         lastPage.value = result.lastPage;
@@ -83,7 +85,7 @@ onMounted(async () => {
                         <GcoinIcon />
                         <h3>{{ toCurrency(fromAptosUnits(unclaimedEarnings)) }}</h3>
                     </div>
-                    <span>≡ 2.47 APT</span>
+                    <span>≡ {{ toCurrency(fromAptosUnits(unclaimedEarnings) * 0.362) }} APT</span>
                 </div>
 
                 <div class="balance_item">
@@ -95,7 +97,7 @@ onMounted(async () => {
                         <GcoinIcon :color="'var(--tx-semi)'" />
                         <h3>{{ toCurrency(fromAptosUnits(donatedEarnings)) }}</h3>
                     </div>
-                    <span>≡ 0.00 APT</span>
+                    <span>≡ {{ toCurrency(fromAptosUnits(donatedEarnings) * 0.362) }} APT</span>
                 </div>
             </div>
         </div>

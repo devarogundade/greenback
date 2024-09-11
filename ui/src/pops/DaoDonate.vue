@@ -7,13 +7,15 @@ import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { toCurrency, toAptosUnits } from '@/scripts/utils';
 import { useUserStore } from '@/stores/user-store';
 import { ref } from 'vue';
+import { fromAptosUnits } from "@/scripts/utils";
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'refresh']);
 const props = defineProps({ daoAddress: { type: String, required: true } });
 const toast = useToast({ duration: 4000, position: 'top', dismissible: true });
 
+const donating = ref(false);
 const keylessAccount = useKeylessAccounts().keylessAccount?.value;
 const unclaimedEarnings = useUserStore().unclaimedEarnings;
 const amount = ref<number | undefined>(undefined);
@@ -31,17 +33,20 @@ const donate = async () => {
         return;
     }
 
+    donating.value = true;
+
     const txHash = await donateDAO(
         keylessAccount,
         props.daoAddress,
         toAptosUnits(amount.value)
     );
 
-    console.log(txHash);
+    donating.value = false;
 
     if (txHash) {
         toast.success('Donation sent.');
         emit('close');
+        emit('refresh');
     } else {
         toast.error('Failed to donate');
     }
@@ -66,7 +71,7 @@ const donate = async () => {
                         <p>Bal: </p>
                         <div>
                             <GcoinIcon />
-                            <p>{{ toCurrency(unclaimedEarnings) }}</p>
+                            <p>{{ toCurrency(fromAptosUnits(unclaimedEarnings)) }}</p>
                         </div>
                     </div>
                 </div>
@@ -76,7 +81,7 @@ const donate = async () => {
                 </div>
 
                 <div class="action">
-                    <Button :text="'Confirm'" @click="donate" />
+                    <Button :loading="donating" :text="'Confirm'" @click="donate" />
                 </div>
             </div>
         </div>

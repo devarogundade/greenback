@@ -1,4 +1,3 @@
-import { daoAddresses } from './data';
 import {
     AccountAddress,
     KeylessAccount,

@@ -2,24 +2,27 @@
 import Button from '@/components/buttons/Button.vue';
 import MintCoupon from '@/pops/MintCoupon.vue';
 import { ref, onMounted } from 'vue';
-import type { GCOUPON } from '@/types';
+import type { TokenData } from '@/types';
 import { getUserGCoupons } from '@/scripts/nodit';
 import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { AccountAddress } from "@aptos-labs/ts-sdk";
+import ProgressBox from '@/components/ProgressBox.vue';
 
 const mintingPrompt = ref<boolean>(false);
+const loading = ref(false);
+const gcoupons = ref<TokenData[]>([]);
 
-const gcoupons = ref<GCOUPON[]>([]);
-
-const getGNFTs = async (accountAddress: AccountAddress) => {
+const getgcoupons = async (accountAddress: AccountAddress) => {
+    loading.value = true;
     gcoupons.value = await getUserGCoupons(accountAddress);
+    loading.value = false;
 };
 
 onMounted(() => {
     const keylessAccount = useKeylessAccounts().keylessAccount?.value;
     if (!keylessAccount) return;
 
-    getGNFTs(keylessAccount.accountAddress);
+    getgcoupons(keylessAccount.accountAddress);
 });
 </script>
 
@@ -30,9 +33,30 @@ onMounted(() => {
                 <h3>Coupons</h3>
                 <Button :text="'Mint Coupon'" @click="mintingPrompt = true" />
             </div>
+
+            <MintCoupon @close="mintingPrompt = false" v-if="mintingPrompt" />
         </div>
 
-        <MintCoupon @close="mintingPrompt = false" v-if="mintingPrompt" />
+        <div class="progress" v-if="loading">
+            <ProgressBox />
+        </div>
+
+        <div class="gcoupons" v-else>
+            <div class="gcoupon" v-for="gcoupon, index in gcoupons" :key="index">
+                <div class="image">
+                    <img :src="gcoupon.token_uri" :alt="gcoupon.token_name">
+                </div>
+                <div class="detail">
+                    <p class="name">{{ gcoupon.token_name }}</p>
+                    <p class="description">{{ gcoupon.description }}</p>
+                    <a :href="`https://explorer.aptoslabs.com/token/${gcoupon.token_data_id}/0?network=testnet`">
+                        <Button :text="'Redeem'">
+                            <OutIcon :color="'var(--bg)'" />
+                        </Button>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -50,5 +74,76 @@ onMounted(() => {
     color: var(--tx-semi);
     font-size: 40px;
     font-weight: 500;
+}
+
+.progress {
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+}
+
+.gcoupons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.gcoupon {
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    width: 240px;
+    background: var(--bg-darker);
+}
+
+.gcoupon .image {
+    width: 100%;
+    height: 200px;
+}
+
+.image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gcoupon .detail {
+    padding: 20px;
+    position: relative;
+}
+
+.name {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--tx-normal);
+}
+
+.description {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--tx-semi);
+    margin-top: 4px;
+}
+
+.detail button {
+    width: 200px;
+}
+
+.detail button:hover {
+    opacity: 1;
+}
+
+.detail a {
+    position: absolute;
+    left: 20px;
+    bottom: -40px;
+    transition: .2s;
+    opacity: 0;
+}
+
+.gcoupon:hover .detail a {
+    opacity: 1;
+    bottom: 20px;
 }
 </style>

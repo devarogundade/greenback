@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import Button from '@/components/buttons/Button.vue';
 import { ref, onMounted } from 'vue';
-import type { GNFT } from '@/types';
+import type { TokenData } from '@/types';
 import { getUserGNFTs } from '@/scripts/nodit';
 import { useKeylessAccounts } from '@/scripts/keyless-accounts';
 import { AccountAddress } from "@aptos-labs/ts-sdk";
+import OutIcon from '@/components/icons/OutIcon.vue';
+import ProgressBox from '@/components/ProgressBox.vue';
 
-const gnfts = ref<GNFT[]>([]);
+const loading = ref(false);
+const gnfts = ref<TokenData[]>([]);
 
 const getGNFTs = async (accountAddress: AccountAddress) => {
+    loading.value = true;
     gnfts.value = await getUserGNFTs(accountAddress);
+    loading.value = false;
 };
 
 onMounted(() => {
@@ -25,11 +31,25 @@ onMounted(() => {
             <div class="achievements_title">
                 <h3>Achievements 🏆</h3>
             </div>
+        </div>
 
-            <div class="gnfts">
-                <div class="gnft" v-for="gnft, index in gnfts" :key="index">
-                    <img :src="gnft.token_uri" :alt="gnft.name">
-                    <div class="name">{{ gnft.name }}</div>
+        <div class="progress" v-if="loading">
+            <ProgressBox />
+        </div>
+
+        <div class="gnfts" v-else>
+            <div class="gnft" v-for="gnft, index in gnfts" :key="index">
+                <div class="image">
+                    <img :src="gnft.token_uri" :alt="gnft.token_name">
+                </div>
+                <div class="detail">
+                    <p class="name">{{ gnft.token_name }}</p>
+                    <p class="description">{{ gnft.description }}</p>
+                    <a :href="`https://explorer.aptoslabs.com/token/${gnft.token_data_id}/0?network=testnet`">
+                        <Button :text="'View'">
+                            <OutIcon :color="'var(--bg)'" />
+                        </Button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -52,6 +72,12 @@ onMounted(() => {
     font-weight: 500;
 }
 
+.progress {
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+}
+
 .gnfts {
     display: flex;
     flex-wrap: wrap;
@@ -60,31 +86,60 @@ onMounted(() => {
 }
 
 .gnft {
-    width: 130px;
-    height: 180px;
-    border-radius: 6px;
+    border-radius: 12px;
     overflow: hidden;
-    position: relative;
     cursor: pointer;
+    width: 240px;
+    background: var(--bg-darker);
 }
 
-.gnft img {
+.gnft .image {
+    width: 100%;
+    height: 200px;
+}
+
+.image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.gnft .name {
-    width: 100%;
-    height: 100%;
-    bottom: 0;
-    left: 0;
-    position: absolute;
+.gnft .detail {
+    padding: 20px;
+    position: relative;
+}
+
+.name {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--tx-normal);
+}
+
+.description {
     font-size: 14px;
-    color: var(--bg);
-    display: flex;
-    align-items: flex-end;
-    background: linear-gradient(to bottom, transparent, var(--tx-normal));
-    padding: 10px;
+    font-weight: 400;
+    color: var(--tx-semi);
+    margin-top: 4px;
+}
+
+.detail button {
+    width: 200px;
+}
+
+.detail button:hover {
+    opacity: 1;
+}
+
+.detail a {
+    position: absolute;
+    left: 20px;
+    bottom: -40px;
+    transition: .2s;
+    opacity: 0;
+}
+
+.gnft:hover .detail a {
+    opacity: 1;
+    bottom: 20px;
 }
 </style>

@@ -26,6 +26,12 @@ const daoDonating = ref(false);
 const loading = ref(false);
 const voting = ref(false);
 
+const refreshDAO = () => {
+    setTimeout(async () => {
+        dao.value = await unpackDAO(route.params.id as string);
+    }, 2000);
+};
+
 const getDAO = async () => {
     loading.value = true;
     dao.value = await unpackDAO(route.params.id as string);
@@ -165,7 +171,8 @@ onMounted(() => {
             </div>
         </div>
 
-        <DaoDonate @close="daoDonating = false" v-if="dao && daoDonating" :daoAddress="dao.daoAddress" />
+        <DaoDonate @result="refreshDAO" @close="daoDonating = false" v-if="dao && daoDonating"
+            :daoAddress="dao.daoAddress" />
     </div>
 </template>
 

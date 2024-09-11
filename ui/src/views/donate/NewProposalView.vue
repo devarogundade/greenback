@@ -59,7 +59,7 @@ const submitProposal = async () => {
     if (!dao.value) return;
     if (!keylessAccount || !keylessAccount.value) return;
 
-    if (donatedAmount.value < dao.value.minRequiredProposerVotingPower) {
+    if (Number(donatedAmount.value) < dao.value.minRequiredProposerVotingPower) {
         toast.error('Insufficient voting power.');
         return;
     }
@@ -223,7 +223,6 @@ onMounted(() => {
     justify-content: center;
     margin-top: 100px;
 }
-
 
 .donate_title_list {
     display: flex;

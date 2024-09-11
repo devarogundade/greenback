@@ -2,6 +2,7 @@
 import CloseIcon from '@/components/icons/CloseIcon.vue';
 import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import Button from '@/components/buttons/Button.vue';
+import { fromAptosUnits } from '@/scripts/utils';
 import { couponProviders } from '@/scripts/data';
 
 const emit = defineEmits([
@@ -30,7 +31,7 @@ const emit = defineEmits([
                         <p class="provider_description">{{ provider.description }}</p>
                         <div class="provider_cost">
                             <GcoinIcon />
-                            <p>{{ provider.cost }}</p>
+                            <p>{{ fromAptosUnits(provider.cost) }}</p>
                         </div>
                     </div>
                 </div>
@@ -157,5 +158,9 @@ const emit = defineEmits([
 .close svg {
     width: 30px;
     height: 30px;
+}
+
+.action button {
+    width: 200px;
 }
 </style>

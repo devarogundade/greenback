@@ -98,7 +98,7 @@ onMounted(() => {
                 </div>
                 <div class="step_text">
                   <h3>Sign in with Google</h3>
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo dolorem iusto repellat?</p>
+                  <p>Connect with Aptos Keyless Account, no hassle of keeping or storing private keys.</p>
                 </div>
               </div>
 
@@ -110,7 +110,8 @@ onMounted(() => {
                 </div>
                 <div class="step_text">
                   <h3>Request for your GCard</h3>
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo dolorem iusto repellat?</p>
+                  <p>Interact seamlessly with the GreenBack reverse vending machine by having your own Access
+                    Card.</p>
                 </div>
               </div>
 
@@ -122,7 +123,7 @@ onMounted(() => {
                 </div>
                 <div class="step_text">
                   <h3>Start recycling your used bottlles</h3>
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo dolorem iusto repellat?</p>
+                  <p>Recycle your bottles to reduce waste, save resources, and protect our planet!</p>
                 </div>
               </div>
 
@@ -134,7 +135,7 @@ onMounted(() => {
                 </div>
                 <div class="step_text">
                   <h3>Accumulate $GCoin</h3>
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo dolorem iusto repellat?</p>
+                  <p>Earn rewards in $GCoin by recycling bottles and contribute to a cleaner planet!</p>
                 </div>
               </div>
             </div>

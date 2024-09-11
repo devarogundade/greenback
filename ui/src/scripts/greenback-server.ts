@@ -20,11 +20,12 @@ export async function requestCard(
 
 export async function getUserActivities(
     accountAddress: AccountAddress,
+    cardId: string | undefined,
     page: number
 ): Promise<Paged<Activity[]> | null> {
     try {
         const userAddress = accountAddress.toString();
-        const response = await api.get(`/activities?user_address=${userAddress}&page=${page}`);
+        const response = await api.get(`/activities?user_address=${userAddress}&card_id=${cardId}&page=${page}`);
         return response.data;
     } catch (error) {
         console.log(error);

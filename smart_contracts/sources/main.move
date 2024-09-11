@@ -120,7 +120,8 @@ module greenback::main {
 
     public entry fun claim_earnings(
         sender: &signer,
-        amount: u64
+        amount: u64,
+        receiver: address
     ) acquires User, Registry {
         let registry = borrow_global<Registry>(@greenback);
         let gcoin = *option::borrow(&registry.gcoin);     
@@ -135,7 +136,7 @@ module greenback::main {
 
         assets::transfer_fungible_asset(
             gcoin, 
-            sender_address, 
+            receiver, 
             claimed_amount
         );
     }
