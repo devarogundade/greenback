@@ -29,11 +29,11 @@ import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
                         </div>
                     </button>
 
-                    <RouterLink to="/recycling-machine">
+                    <a href="/#recycling-machine">
                         <button class="tabs_item">
                             <p>The Recycling Machine</p>
                         </button>
-                    </RouterLink>
+                    </a>
                 </div>
 
                 <div class="logo">
