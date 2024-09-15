@@ -1,155 +1,184 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <Servo.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+#include <SPI.h>
 #include <MFRC522.h>
 
-// Pins for components
-#define SS_PIN D4    // RFID SS pin
-#define RST_PIN D3   // RFID RST pin
-#define SERVO_PIN D1 // Servo motor pin
-#define GREEN_LED D5 // Green LED pin
-#define RED_LED D6   // Red LED pin
+// Replace these with your Wi-Fi credentials
+const char *ssid = "your_SSID";
+const char *password = "your_PASSWORD";
+
+// Server URL for POST request
+const String serverUrl = "http://your-server.com/post-endpoint";
 
 // RFID setup
-MFRC522 rfid(SS_PIN, RST_PIN);
+#define SS_PIN D2
+#define RST_PIN D1
+MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 // Servo setup
 Servo servoMotor;
+int servoPin = D5;
 
-// LCD setup (16x2 display, I2C address 0x27)
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+// ESP32 CAM pin for object recognition
+#define OBJECT_DETECT_PIN D6
 
-// WiFi credentials
-const char *ssid = "Ibrahim";
-const char *password = "WifiPassword";
+// LED setup
+#define GREEN_LED D7
+#define RED_LED D8
 
-// Server endpoint
-const char *serverUrl = "https://server.thegreenback.xyz/dispose-to-machine-via-card";
+// LCD setup
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address
 
-// Variables for RFID card ID
+// Variables
 String rfidUID = "";
-
-// Function to send POST request
-void sendPostRequest(String id)
-{
-    WiFiClient client;
-    HTTPClient http;
-
-    http.begin(client, serverUrl);
-    http.addHeader("Content-Type", "application/json");
-
-    String jsonData = "{\"rfid_id\": \"" + id + "\"}";
-
-    int httpResponseCode = http.POST(jsonData);
-    if (httpResponseCode > 0)
-    {
-        Serial.println("POST sent successfully.");
-    }
-    else
-    {
-        Serial.println("Error sending POST.");
-    }
-
-    http.end();
-}
+bool isPlastic = false;
 
 void setup()
 {
+    // Start serial communication
     Serial.begin(115200);
 
     // Initialize components
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.println("Connecting to WiFi...");
-    }
-    Serial.println("Connected to WiFi");
-
-    SPI.begin();     // Initialize SPI bus
-    rfid.PCD_Init(); // Initialize RFID
-
-    lcd.init();      // Initialize LCD
-    lcd.backlight(); // Turn on backlight
-
+    SPI.begin();
+    mfrc522.PCD_Init();
+    lcd.init();
+    lcd.backlight();
     pinMode(GREEN_LED, OUTPUT);
     pinMode(RED_LED, OUTPUT);
+    pinMode(OBJECT_DETECT_PIN, INPUT);
+    servoMotor.attach(servoPin);
 
-    servoMotor.attach(SERVO_PIN);
-    servoMotor.write(0); // Servo at 0 degrees
+    // Connect to Wi-Fi
+    connectToWiFi();
 
+    // Display welcome message
+    lcd.setCursor(0, 0);
+    lcd.print("GreenBack RVM");
+    delay(2000);
     lcd.clear();
-    lcd.print("GreenBack Ready");
 }
 
 void loop()
 {
-    if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial())
+    // Look for RFID card
+    if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial())
     {
-        rfidUID = "";
-        for (byte i = 0; i < rfid.uid.size; i++)
-        {
-            rfidUID += String(rfid.uid.uidByte[i], HEX);
-        }
+        return;
+    }
 
-        Serial.print("RFID Card detected: ");
-        Serial.println(rfidUID);
+    // Get RFID UID
+    rfidUID = "";
+    for (byte i = 0; i < mfrc522.uid.size; i++)
+    {
+        rfidUID += String(mfrc522.uid.uidByte[i], HEX);
+    }
 
-        // Display welcome message
-        lcd.clear();
-        lcd.setCursor(2, 0);
-        lcd.print("Welcome to");
-        lcd.setCursor(3, 1);
-        lcd.print("GreenBack");
+    // Display welcome message with RFID user
+    lcd.setCursor(0, 0);
+    lcd.print("Welcome to");
+    lcd.setCursor(0, 1);
+    lcd.print("GreenBack");
+    delay(2000);
 
+    // Request to insert bottle
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Insert your");
+    lcd.setCursor(0, 1);
+    lcd.print("plastic bottle");
+    delay(5000);
+
+    // Check if it's a plastic bottle using ESP32 CAM
+    isPlastic = digitalRead(OBJECT_DETECT_PIN);
+
+    if (isPlastic)
+    {
+        // Move servo to drop the bottle
+        servoMotor.write(90);
         delay(2000);
+        servoMotor.write(0);
 
-        // Prompt to insert bottle
-        lcd.clear();
-        lcd.setCursor(2, 0);
-        lcd.print("Insert your");
-        lcd.setCursor(5, 1);
-        lcd.print("bottle");
-
-        delay(5000);
-
-        // Commented: ESP32-CAM object recognition part
-        /*
-        if (!isPlasticBottle()) {
-          lcd.clear();
-          lcd.print("Not a bottle");
-          digitalWrite(RED_LED, HIGH);
-          delay(3000);
-          digitalWrite(RED_LED, LOW);
-          return;
-        }
-        */
-
-        // Bottle recognized, proceed
-        servoMotor.write(90); // Move servo to throw the bottle
-        delay(2000);          // Wait for the bottle to drop
-        servoMotor.write(0);  // Move servo back to original position
-
-        // Send post request with RFID ID
+        // Send POST request with RFID data
         sendPostRequest(rfidUID);
 
         // Turn on green LED for success
         digitalWrite(GREEN_LED, HIGH);
-        delay(3000);
-
+        delay(2000);
         digitalWrite(GREEN_LED, LOW);
 
         lcd.clear();
-        lcd.setCursor(2, 0);
-        lcd.print("Thank you!");
-
+        lcd.setCursor(0, 0);
+        lcd.print("Bottle accepted");
         delay(2000);
+        lcd.clear();
+    }
+    else
+    {
+        // Turn on red LED for error
+        digitalWrite(RED_LED, HIGH);
+        delay(2000);
+        digitalWrite(RED_LED, LOW);
 
-        // Reset LCD message
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("GreenBack Ready");
+        lcd.print("Not a plastic");
+        lcd.setCursor(0, 1);
+        lcd.print("bottle!");
+        delay(2000);
+        lcd.clear();
+    }
+}
+
+void connectToWiFi()
+{
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Connecting to");
+    lcd.setCursor(0, 1);
+    lcd.print("Wi-Fi...");
+
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Wi-Fi Connected!");
+    delay(2000);
+    lcd.clear();
+}
+
+void sendPostRequest(String rfid)
+{
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        HTTPClient http;
+        http.begin(serverUrl);
+        http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        String postData = "rfid=" + rfid;
+        int httpResponseCode = http.POST(postData);
+
+        if (httpResponseCode > 0)
+        {
+            Serial.println("POST Request Sent.");
+            Serial.println("Response code: " + String(httpResponseCode));
+        }
+        else
+        {
+            Serial.println("Error sending POST request");
+        }
+
+        http.end();
+    }
+    else
+    {
+        Serial.println("Error connecting to Wi-Fi");
     }
 }

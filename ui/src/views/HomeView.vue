@@ -67,7 +67,7 @@ onMounted(() => {
 
             <div class="machine">
               <div class="machine_image">
-                <img src="/images/vending_machine.jpg" alt="">
+                <img src="/images/vending_machine.png" alt="">
                 <PlayCircleIcon />
               </div>
               <div class="machine_name">
@@ -265,16 +265,18 @@ onMounted(() => {
 
 .machine_image {
   width: 1200px;
-  height: 600px;
   max-width: 100%;
   border-radius: 16px;
   overflow: hidden;
   position: relative;
+  background-color: var(--bg-dark);
+  display: flex;
+  justify-content: center;
+  padding-top: 50px;
 }
 
 .machine_image img {
-  width: 100%;
-  height: 100%;
+  height: 600px;
 }
 
 .machine_image svg {
