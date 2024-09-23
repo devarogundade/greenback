@@ -20,6 +20,6 @@ To address these problems, we are developing a smart reverse vending machine des
 
 The machine is connected to the GreenBack server, which will credit users with $GCoin for their recycling efforts. Users can then manage their earnings through a web application linked to their Aptos wallet. The $GCoin can either be donated to selected charities or swapped into Aptos coin for personal use.
 
-[Less technical](https://dorahacks.io/buidl/14559/)
+[Less technical details](https://dorahacks.io/buidl/14559/)
 
 ## TECHNICAL
