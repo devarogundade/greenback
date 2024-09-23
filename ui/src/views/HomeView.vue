@@ -264,7 +264,7 @@ onMounted(() => {
 }
 
 .machine_image {
-  width: 1200px;
+  width: 1000px;
   max-width: 100%;
   border-radius: 16px;
   overflow: hidden;
@@ -272,11 +272,10 @@ onMounted(() => {
   background-color: var(--bg-dark);
   display: flex;
   justify-content: center;
-  padding-top: 50px;
 }
 
 .machine_image img {
-  height: 600px;
+  width: 100%;
 }
 
 .machine_image svg {
@@ -289,7 +288,7 @@ onMounted(() => {
 }
 
 .machine_name {
-  width: 1200px;
+  width: 1000px;
   max-width: 100%;
   position: relative;
   display: flex;
