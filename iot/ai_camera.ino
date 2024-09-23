@@ -4,9 +4,9 @@
 // GPIO pin to signal ESP8266 (connected to OBJECT_DETECT_PIN in ESP8266)
 #define SIGNAL_PIN 13
 
-// Wi-Fi credentials
-const char *ssid = "your_SSID";
-const char *password = "your_PASSWORD";
+// WiFi credentials
+const char *ssid = "MTN-2.4G-3D6751";
+const char *password = "CEAD9ABF";
 
 // Function prototypes
 void setupCamera();
