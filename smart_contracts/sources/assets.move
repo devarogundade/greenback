@@ -12,39 +12,17 @@ module greenback::assets {
     use aptos_token_objects::collection::{Self, Collection};
     use aptos_token_objects::token::{Self, Token};    
     use aptos_framework::fungible_asset::{FungibleStore};
+    use aptos_framework::account::{Self, SignerCapability};
 
-    // ============== Errors ============== //
-
-    const E_TOKEN_AMOUNT: u64 = 1;
-
-    // ============== Events ============== //
-
-    #[event]
-    struct CreateFAEvent has store, drop {
-        creator_addr: address,
-        fa_obj_addr: address,
-        max_supply: option::Option<u128>,
-        name: String,
-        symbol: String,
-        decimals: u8,
-        icon_uri: String,
-        project_uri: String,
-    }
-
-    #[event]
-    struct MintFAEvent has store, drop {
-        fa_obj_addr: address,
-        amount: u64,
-        recipient_addr: address,
-    }
+    friend greenback::dao;
+    friend greenback::main;
 
     // ============== Structs ============== //
 
     struct FAController has key {
         mint_ref: fungible_asset::MintRef,
         burn_ref: fungible_asset::BurnRef,
-        transfer_ref: fungible_asset::TransferRef,
-        admin_store: Object<FungibleStore>
+        transfer_ref: fungible_asset::TransferRef
     }
 
     struct DAController has key {
@@ -53,44 +31,34 @@ module greenback::assets {
     }
 
     struct Registry has key {
-        fungible_assets: vector<Object<fungible_asset::Metadata>>,
-        digital_assets: vector<Object<Collection>>
+        signer_cap: SignerCapability
     }
 
     // ============== Init Function ============== //
 
-    fun init_module(sender: &signer) {
+    fun init_module(greenback: &signer) {
+        let (res_signer, res_signer_cap) = account::create_resource_account(greenback, b"Registry");
+
         let registry = Registry {
-            fungible_assets: vector::empty(),
-            digital_assets: vector::empty()
+            signer_cap: res_signer_cap
         };
 
-        move_to(sender, registry);
-    }
+        move_to(greenback, registry);
 
-    // ============== Entry Functions ============== //
-
-    public entry fun create_fungible_assets(
-        sender: &signer,
-    ) acquires Registry {
         // GCOIN
         create_fungible_asset_internal(
-            sender, 
-            option::some(1_000_000_000_000_000), // max supply
+            &res_signer, 
+            option::none(), // max supply
             string::utf8(b"Greenback Coin"), // name
             string::utf8(b"GCOIN"), // symbol
             8, // decimals
             string::utf8(b"https://thegreenback.xyz/images/gcoin.png"), // icon
             string::utf8(b"https://thegreenback.xyz") // project url
         );
-    }
 
-    public entry fun create_digital_assets(
-        sender: &signer,
-    ) acquires Registry {
         // GCOUPON
         create_digital_asset_internal(
-            sender, 
+            &res_signer,
             string::utf8(b"Greenback Coupon description."), // description
             string::utf8(b"Greenback Coupon"), // symbol
             string::utf8(b"https://thegreenback.xyz") // project url
@@ -98,43 +66,41 @@ module greenback::assets {
 
         // GNFT
         create_digital_asset_internal(
-            sender, 
+            &res_signer,
             string::utf8(b"Greenback non-fungible token description."), // description
             string::utf8(b"Greenback NFT"), // symbol
             string::utf8(b"https://thegreenback.xyz") // project url
         );
-    }
+}
 
-    public entry fun mint_fungible_asset(
-        sender: &signer,
+
+    // ============== Friend Functions ============== //
+
+    public(friend) fun mint_fungible_asset(
         fa: Object<fungible_asset::Metadata>,
+        to: address,
         amount: u64
     ) acquires FAController {
-        let sender_addr = signer::address_of(sender);
         let fa_obj_addr = object::object_address(&fa);
         let config = borrow_global<FAController>(fa_obj_addr);
-        primary_fungible_store::mint(&config.mint_ref, sender_addr, amount);
-        event::emit(MintFAEvent {
-            fa_obj_addr,
-            amount,
-            recipient_addr: sender_addr,
-        });
+        primary_fungible_store::mint(&config.mint_ref, to, amount);
     }
 
-    public entry fun mint_digital_asset(
-        admin: &signer,
+    public(friend) fun mint_digital_asset(
         da: Object<Collection>,
         description: String,
         name: String,
         token_uri: String,
-        user_address: address,
-    ) acquires DAController {
-        let admin_addr = signer::address_of(admin);
+        to: address,
+    ) acquires DAController, Registry {
+        let registry = borrow_global<Registry>(@greenback);
+        let res_signer = account::create_signer_with_capability(&registry.signer_cap);
+
         let da_obj_addr = object::object_address(&da);
         let config = borrow_global_mut<DAController>(da_obj_addr);
         
         token::create_named_token(
-            admin,
+            &res_signer,
             config.collection_name,
             description,
             name,
@@ -143,37 +109,14 @@ module greenback::assets {
         );
 
         let token_addr = token::create_token_address(
-            &admin_addr,
+            &signer::address_of(&res_signer),
             &config.collection_name,
             &name
         );
 
         let token_obj = object::address_to_object<Token>(token_addr);
 
-        object::transfer(admin, token_obj, user_address);
-    }
-
-    // ============== Friend Functions ============== //
-
-    public fun transfer_fungible_asset(
-        fa: Object<fungible_asset::Metadata>,
-        user_address: address,
-        amount: u64
-    ) acquires FAController {
-        let fa_obj_addr = object::object_address(&fa);
-        let config = borrow_global<FAController>(fa_obj_addr);
-
-        let user_store = primary_fungible_store::ensure_primary_store_exists(
-            user_address,
-            fa
-        );
-
-        fungible_asset::transfer_with_ref(
-            &config.transfer_ref,
-            config.admin_store,
-            user_store,
-            amount
-        );
+        object::transfer(&res_signer, token_obj, to);
     }
 
     // ============== Internal Functions ============== //
@@ -186,7 +129,7 @@ module greenback::assets {
         decimals: u8,
         icon_uri: String,
         project_uri: String
-    ) acquires Registry {
+    ): Object<fungible_asset::Metadata> {
         let fa_obj_constructor_ref = &object::create_sticky_object(@greenback);
         let fa_obj_signer = object::generate_signer(fa_obj_constructor_ref);
         let fa_obj_addr = signer::address_of(&fa_obj_signer);
@@ -194,7 +137,7 @@ module greenback::assets {
         primary_fungible_store::create_primary_store_enabled_fungible_asset(
             fa_obj_constructor_ref,
             max_supply,
-            name,
+    name,
             symbol,
             decimals,
             icon_uri,
@@ -207,31 +150,16 @@ module greenback::assets {
         let mint_ref = fungible_asset::generate_mint_ref(fa_obj_constructor_ref);
         let burn_ref = fungible_asset::generate_burn_ref(fa_obj_constructor_ref);
         let transfer_ref = fungible_asset::generate_transfer_ref(fa_obj_constructor_ref);
-        let admin_store = primary_fungible_store::ensure_primary_store_exists(
-            sender_address, 
-            metadata_obj
-        );
 
+        primary_fungible_store::mint(&mint_ref, sender_address, 1_000_000_000_000_000);
+        
         move_to(&fa_obj_signer, FAController {
             mint_ref,
             burn_ref,
-            transfer_ref,
-            admin_store
+            transfer_ref
         });
 
-        let registry = borrow_global_mut<Registry>(@greenback);
-        vector::push_back(&mut registry.fungible_assets, metadata_obj);
-
-        event::emit(CreateFAEvent {
-            creator_addr: sender_address,
-            fa_obj_addr,
-            max_supply,
-            name,
-            symbol,
-            decimals,
-            icon_uri,
-            project_uri,
-        });
+        metadata_obj
     }
 
     fun create_digital_asset_internal(
@@ -239,7 +167,7 @@ module greenback::assets {
         description: String,
         name: String,
         project_uri: String
-    ) acquires Registry {
+    ) {
         let da_obj_constructor_ref = collection::create_unlimited_collection(
             sender,
             description,
@@ -257,52 +185,5 @@ module greenback::assets {
             collection_name: name,
             mutator_ref
         });
-
-        let registry = borrow_global_mut<Registry>(@greenback);
-        vector::push_back(&mut registry.digital_assets, object::address_to_object(da_obj_addr));
-    }
-
-    // ============== View Functions =============== //
-
-    #[view]
-    public fun get_registry(): vector<Object<fungible_asset::Metadata>> acquires Registry {
-        let registry = borrow_global<Registry>(@greenback);
-        registry.fungible_assets
-    }
-
-    #[view]
-    public fun get_metadata(
-        fa: Object<fungible_asset::Metadata>
-    ): (String, String, u8) {
-        (
-            fungible_asset::name(fa),
-            fungible_asset::symbol(fa),
-            fungible_asset::decimals(fa),
-        )
-    }
-
-    #[view]
-    public fun get_current_supply(fa: Object<fungible_asset::Metadata>): u128 {
-        let maybe_supply = fungible_asset::supply(fa);
-        if (option::is_some(&maybe_supply)) {
-            option::extract(&mut maybe_supply)
-        } else {
-            0
-        }
-    }
-
-    #[view]
-    public fun get_max_supply(fa: Object<fungible_asset::Metadata>): u128 {
-        let maybe_supply = fungible_asset::maximum(fa);
-        if (option::is_some(&maybe_supply)) {
-            option::extract(&mut maybe_supply)
-        } else {
-            0
-        }
-    }
-
-    #[view]
-    public fun get_balance(fa: Object<fungible_asset::Metadata>, user: address): u64 {
-        primary_fungible_store::balance(user, fa)
     }
 }

@@ -15,7 +15,7 @@ module greenback::dao {
     use aptos_framework::timestamp;
 
     use greenback::main::{get_voting_power, on_donate};
-    use greenback::assets::{transfer_fungible_asset};
+    use greenback::assets;
     use greenback::events;
 
     // ============== Errors ============== //
@@ -340,7 +340,7 @@ module greenback::dao {
     ) {
         assert!(dao.available_amount > proposal.proposed_amount, E_LOW_FUNDS);
 
-        transfer_fungible_asset(
+        assets::mint_fungible_asset(
             dao.gcoin,
             dao.admin,
             proposal.proposed_amount

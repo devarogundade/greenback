@@ -59,6 +59,7 @@ module greenback::main {
     struct Coupon has copy, drop, store {
         name: String,
         description: String,
+        token_uri: String,
         amount: u64
     }
 
@@ -134,7 +135,7 @@ module greenback::main {
 
         let claimed_amount = mul_div_internal(amount, registry.gcoin_to_aptos, DENOMINATOR);
 
-        assets::transfer_fungible_asset(
+        assets::mint_fungible_asset(
             gcoin, 
             receiver, 
             claimed_amount
@@ -154,6 +155,16 @@ module greenback::main {
 
         user.unclaimed_earnings = user.unclaimed_earnings - coupon.amount;
         user.withdrawn_earnings = user.withdrawn_earnings + coupon.amount;
+
+        let gcoupon = *option::borrow(&registry.gcoupon);     
+ 
+        assets::mint_digital_asset(
+            gcoupon,
+            coupon.description,
+            coupon.name,
+            coupon.token_uri,
+            sender_address
+        );
 
         events::mint_coupon_event(
             sender_address,
@@ -221,7 +232,6 @@ module greenback::main {
         let gnft = *option::borrow(&registry.gnft);     
 
         assets::mint_digital_asset(
-            admin,
             gnft,
             description,
             name,
@@ -243,7 +253,6 @@ module greenback::main {
         let gcoupon = *option::borrow(&registry.gcoupon);     
 
         assets::mint_digital_asset(
-            admin,
             gcoupon,
             description,
             name,
@@ -277,6 +286,7 @@ module greenback::main {
         admin: &signer,
         name: String,
         description: String,
+        token_uri: String,
         amount: u64
     ) acquires Registry {
         only_admin_internal(admin);
@@ -286,6 +296,7 @@ module greenback::main {
         let coupon = Coupon {
             name,
             description,
+            token_uri,
             amount
         };
         let coupon_id = registry.next_coupon_id + 1;
