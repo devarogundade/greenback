@@ -1,21 +1,57 @@
 <script setup lang="ts">
+import ProgressBox from '@/components/ProgressBox.vue';
 import Chart from '@/components/Chart.vue';
 import Button from '@/components/buttons/Button.vue';
 import ScanIcon from '@/components/icons/ScanIcon.vue';
 import QrScanner from '@/pops/QrScanner.vue';
-import { ref } from 'vue';
+import { useUserStore } from '@/stores/user-store';
+import { ref, onMounted, watch } from 'vue';
+import { KeylessAccount } from "@aptos-labs/ts-sdk";
+import { useKeylessAccounts } from '@/scripts/keyless-accounts';
+import { getMetrics } from '@/scripts/greenback-server';
 
-const data = [
-    { name: 'Monday', pl: 1000, avg: 500, inc: 300 },
-    { name: 'Tuesday', pl: 2000, avg: 900, inc: 400 },
-    { name: 'Wednesday', pl: 400, avg: 400, inc: 500 },
-    { name: 'Thursday', pl: 3100, avg: 1300, inc: 700 },
-    { name: 'Friday', pl: 200, avg: 100, inc: 200 },
-    { name: 'Yesterday', pl: 600, avg: 400, inc: 300 },
-    { name: 'Today', pl: 500, avg: 90, inc: 100 }
-];
+const metric = useUserStore().metric;
+const loadingMetric = ref(false);
+
+const getUserMetric = async (keylessAccount: KeylessAccount) => {
+    loadingMetric.value = true;
+    const metric = await getMetrics(keylessAccount.accountAddress);
+    useUserStore.setState({ metric });
+    loadingMetric.value = false;
+};
+
+interface ChartData {
+    name: string;
+    pl: number;
+}
+
+const data = ref<ChartData[]>([]);
 
 const activeQrCode = ref(false);
+
+onMounted(() => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+
+    getUserMetric(keylessAccount);
+});
+
+watch(
+    metric,
+    () => {
+        if (metric.value) {
+            data.value = metric.value?.reverse().map((m) => {
+                return {
+                    name: Intl.DateTimeFormat('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                    }).format(new Date(m.date)),
+                    pl: m.value * 100,
+                };
+            });
+        }
+    }
+);
 </script>
 
 <template>
@@ -23,11 +59,13 @@ const activeQrCode = ref(false);
         <div class="count_wrapper">
             <img src="https://img.freepik.com/free-vector/3d-green-gradient-recycle-sign_78370-826.jpg?t=st=1722726322~exp=1722729922~hmac=577afa87216937fd5967af00d672d283ecccdbd828b74cc179deaa2575108425&w=826"
                 alt="">
-            <h3>You have recycled <br> <span>5 plastic</span> bottles today!.</h3>
+            <h3>You have recycled <br> <span>{{ (data?.[data.length - 1]?.pl / 100) || 0 }} plastic</span> bottles
+                today!.</h3>
         </div>
 
         <div class="chart_wrapper">
-            <Chart :data="data" :marker="true" />
+            <ProgressBox v-if="loadingMetric" />
+            <Chart v-else :data="data" :marker="true" />
         </div>
 
         <div class="scan">
@@ -55,6 +93,7 @@ const activeQrCode = ref(false);
     display: flex;
     justify-content: center;
     margin-top: 20px;
+    min-height: 200px;
 }
 
 .count_wrapper img {

@@ -27,6 +27,13 @@ export interface CurrentTokenOwnershipV2 {
     amount: number;
 }
 
+type MetricData = {
+    value: number;
+    date: Date;
+};
+
+export type Metric = MetricData[];
+
 export type DAO = {
     name: string;
     availableAmount: number;

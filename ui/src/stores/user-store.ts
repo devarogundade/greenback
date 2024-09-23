@@ -1,3 +1,4 @@
+import { Metric } from '@/types';
 import create from 'vue-zustand';
 
 interface User {
@@ -6,6 +7,7 @@ interface User {
     donatedEarnings: number;
     cardId: string | undefined;
     aptBalance: number;
+    metric: Metric | null;
 }
 
 export const useUserStore = create<User>(() => ({
@@ -13,5 +15,6 @@ export const useUserStore = create<User>(() => ({
     withdrawnEarnings: 0,
     donatedEarnings: 0,
     cardId: undefined,
-    aptBalance: 0
+    aptBalance: 0,
+    metric: null
 }));

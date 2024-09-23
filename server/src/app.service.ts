@@ -12,6 +12,7 @@ import { sendMail, Templates } from './mail';
 import { RFIDMaker } from './rfids';
 import { MintGNftDto } from './database/dtos/gnft';
 import { MintGCouponDto } from './database/dtos/gcoupon';
+import * as moment from 'moment';
 
 const TAKE_SIZE: number = 10;
 
@@ -40,14 +41,31 @@ export class AppService {
         { $limit: 7 },
       ]);
 
-      const metric: Metric = {} as Metric;
+      // Start with today's date and go back 7 days
+      const metric: Metric = [];
+      const today = moment().startOf('day');
 
-      activities.forEach((activity, index) => {
-        metric[index] = {
-          value: activity.value,
-          date: activity.date,
-        };
-      });
+      for (let i = 0; i < 7; i++) {
+        const currentDate = today.clone().subtract(i, 'days').toDate();
+
+        // Check if we have an activity for this date
+        const activityForDate = activities.find(
+          activity => moment(activity.date).isSame(currentDate, 'day')
+        );
+
+        // If activity exists for the date, use it; otherwise, pad with zeros
+        if (activityForDate) {
+          metric.push({
+            value: activityForDate.value,
+            date: activityForDate.date,
+          });
+        } else {
+          metric.push({
+            value: 0,  // Padding with zero
+            date: currentDate,   // The date we're padding for
+          });
+        }
+      }
 
       return metric;
     } catch (error) {
