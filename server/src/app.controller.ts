@@ -5,13 +5,20 @@ import { AppService } from './app.service';
 import { RequestCardDto } from './database/dtos/user';
 import { DisposeToMachineDto, DisposeToMachineViaCardDto } from './database/dtos/machine';
 import { Activity } from './database/schemas/activity';
-import { Paged } from './types';
+import { Metric, Paged } from './types';
 import { MintGNftDto } from './database/dtos/gnft';
 import { MintGCouponDto } from './database/dtos/gcoupon';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) { }
+
+  @Get('/metrics')
+  metrics(
+    @Query('user_address') user_address: string,
+  ): Promise<Metric | null> {
+    return this.appService.metrics(user_address);
+  }
 
   @Post('/request-card')
   requestCard(@Body() dto: RequestCardDto): Promise<string | null> {

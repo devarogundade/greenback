@@ -6,7 +6,7 @@ import { FilterQuery, Model } from 'mongoose';
 import { Activity } from './database/schemas/activity';
 import { DisposeToMachineDto, DisposeToMachineViaCardDto } from './database/dtos/machine';
 import { RequestCardDto } from './database/dtos/user';
-import { Paged } from './types';
+import { Metric, Paged } from './types';
 import { GreenbackContract } from './contracts/greenback-contract';
 import { sendMail, Templates } from './mail';
 import { RFIDMaker } from './rfids';
@@ -23,6 +23,37 @@ export class AppService {
     @InjectModel(Activity.name) private activityModel: Model<Activity>
   ) {
     this.contract = new GreenbackContract();
+  }
+
+  async metrics(user_address: string): Promise<Metric | null> {
+    try {
+      const activities = await this.activityModel.aggregate([
+        { $match: { user_address } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$created_at" } },
+            value: { $sum: 1 },
+            date: { $first: "$created_at" }
+          }
+        },
+        { $sort: { date: -1 } },
+        { $limit: 7 },
+      ]);
+
+      const metric: Metric = {} as Metric;
+
+      activities.forEach((activity, index) => {
+        metric[index] = {
+          value: activity.value,
+          date: activity.date,
+        };
+      });
+
+      return metric;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
   }
 
   async requestCard(dto: RequestCardDto): Promise<string | null> {
