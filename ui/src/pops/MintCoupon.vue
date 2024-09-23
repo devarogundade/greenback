@@ -4,11 +4,13 @@ import GcoinIcon from '@/components/icons/GcoinIcon.vue';
 import Button from '@/components/buttons/Button.vue';
 import { fromAptosUnits } from '@/scripts/utils';
 import { couponProviders } from '@/scripts/data';
+import { ref } from 'vue';
 
 const emit = defineEmits([
     'close', 'result'
 ]);
 
+const activeProvider = ref(1);
 </script>
 
 <template>
@@ -22,8 +24,10 @@ const emit = defineEmits([
             </div>
 
             <div class="options">
-                <div class="providers" v-for="provider in couponProviders">
-                    <div class="provider">
+                <div class="providers">
+                    <div v-for="provider in couponProviders" :key="provider.id"
+                        :class="`provider ${activeProvider == provider.id ? 'provider_active' : ''}`"
+                        @click="activeProvider = provider.id">
                         <div class="provider_name">
                             <img :src="provider.image" alt="">
                             <p>{{ provider.name }}</p>
@@ -36,9 +40,10 @@ const emit = defineEmits([
                     </div>
                 </div>
 
-                <div class="action">
-                    <Button :text="'Mint'" />
-                </div>
+            </div>
+
+            <div class="action">
+                <Button :text="'Mint'" @click="emit('result', activeProvider)" />
             </div>
         </div>
     </div>
@@ -97,25 +102,39 @@ const emit = defineEmits([
 
 .options {
     padding: 20px;
+    overflow: auto;
+    height: 400px;
+}
+
+.providers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .provider {
     background: var(--bg-dark);
     border: 1px solid var(--bg-darkest);
-    margin-bottom: 20px;
     padding: 10px;
     border-radius: 6px;
+    cursor: pointer;
+    transition: .2s;
+    user-select: none;
+}
+
+.provider_active {
+    border: 1px solid var(--primary);
 }
 
 .provider_name {
     display: flex;
     gap: 8px;
-    user-select: none;
+    align-items: center;
 }
 
 .provider_name img {
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     border-radius: 4px;
     object-fit: cover;
 }
@@ -153,6 +172,7 @@ const emit = defineEmits([
 .action {
     display: flex;
     justify-content: center;
+    padding: 10px 0;
 }
 
 .close svg {

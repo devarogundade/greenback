@@ -57,8 +57,7 @@ export async function claimEarnings(
 
 export async function mintCoupon(
     keylessAccount: KeylessAccount,
-    couponId: number,
-    amount: number
+    couponId: number
 ): Promise<string | null> {
     try {
         const transaction = await aptos.transaction.build.simple({
@@ -66,8 +65,7 @@ export async function mintCoupon(
             data: {
                 function: `${VITE_CONTRACT_ID}::main::mint_coupon`,
                 functionArguments: [
-                    couponId,
-                    amount
+                    couponId
                 ]
             },
         });

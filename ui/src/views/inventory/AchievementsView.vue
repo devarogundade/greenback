@@ -120,6 +120,12 @@ onMounted(() => {
     font-weight: 400;
     color: var(--tx-semi);
     margin-top: 4px;
+    line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .detail button {

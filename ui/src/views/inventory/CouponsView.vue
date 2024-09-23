@@ -5,24 +5,38 @@ import { ref, onMounted } from 'vue';
 import type { TokenData } from '@/types';
 import { getUserGCoupons } from '@/scripts/nodit';
 import { useKeylessAccounts } from '@/scripts/keyless-accounts';
+import { mintCoupon } from '@/scripts/greenback-contracts';
 import { AccountAddress } from "@aptos-labs/ts-sdk";
 import ProgressBox from '@/components/ProgressBox.vue';
 
 const mintingPrompt = ref<boolean>(false);
 const loading = ref(false);
+const minting = ref(false);
 const gcoupons = ref<TokenData[]>([]);
 
-const getgcoupons = async (accountAddress: AccountAddress) => {
+const getGcoupons = async (accountAddress: AccountAddress) => {
     loading.value = true;
     gcoupons.value = await getUserGCoupons(accountAddress);
     loading.value = false;
+};
+
+const mintGcoupon = async (providerId: number) => {
+    const keylessAccount = useKeylessAccounts().keylessAccount?.value;
+    if (!keylessAccount) return;
+
+    minting.value = true;
+    await mintCoupon(keylessAccount, providerId);
+
+    minting.value = false;
+
+    getGcoupons(keylessAccount.accountAddress);
 };
 
 onMounted(() => {
     const keylessAccount = useKeylessAccounts().keylessAccount?.value;
     if (!keylessAccount) return;
 
-    getgcoupons(keylessAccount.accountAddress);
+    getGcoupons(keylessAccount.accountAddress);
 });
 </script>
 
@@ -31,10 +45,10 @@ onMounted(() => {
         <div class="coupons_header">
             <div class="coupons_title">
                 <h3>Coupons</h3>
-                <Button :text="'Mint Coupon'" @click="mintingPrompt = true" />
+                <Button :text="minting ? 'Minting..' : 'Mint Coupon'" @click="mintingPrompt = true" />
             </div>
 
-            <MintCoupon @close="mintingPrompt = false" v-if="mintingPrompt" />
+            <MintCoupon @close="mintingPrompt = false" @result="mintGcoupon" v-if="mintingPrompt" />
         </div>
 
         <div class="progress" v-if="loading">
@@ -124,6 +138,12 @@ onMounted(() => {
     font-weight: 400;
     color: var(--tx-semi);
     margin-top: 4px;
+    line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .detail button {

@@ -8,23 +8,23 @@ export const daoAddresses: string[] = [
 export const couponProviders: CouponProvider[] = [
     {
         id: 1,
-        name: "Ali Express",
-        description: "5% off items below $20.",
-        image: "/images/coupons/ali-express.webp",
+        name: "Solar energy devices",
+        description: "EcoFlow manufactures clean generators, portable solar panels, and power chargers that use renewable energy to keep gadgets running on the go.",
+        image: "/images/coupons/products-solar.webp",
         cost: 1203000000
     },
     {
         id: 2,
-        name: "Amazon",
-        description: "5% off items below $20.",
-        image: "/images/coupons/amazon.jpg",
+        name: "Sustainable office accessories",
+        description: "Oakywood is a maker of home office tech accessories created using natural materials like wood, cork, and wool.",
+        image: "/images/coupons/products-oakywood.webp",
         cost: 1402300000
     },
     {
         id: 3,
-        name: "Legder",
-        description: "20% off Legder hardware wallet.",
-        image: "/images/coupons/ledger.webp",
+        name: "Pet toys",
+        description: "Harry Barker is known for its designer dog toys and accessories. But there’s more than meets the eye: ",
+        image: "/images/coupons/products-harry-barker.webp",
         cost: 4532000000
     }
 ];
