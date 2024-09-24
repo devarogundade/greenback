@@ -340,7 +340,7 @@ module greenback::dao {
     ) {
         assert!(dao.available_amount > proposal.proposed_amount, E_LOW_FUNDS);
 
-        assets::mint_fungible_asset(
+        assets::transfer_coin(
             dao.gcoin,
             dao.admin,
             proposal.proposed_amount

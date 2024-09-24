@@ -71,10 +71,70 @@ module greenback::assets {
             string::utf8(b"Greenback NFT"), // symbol
             string::utf8(b"https://thegreenback.xyz") // project url
         );
-}
+    }
 
 
     // ============== Friend Functions ============== //
+
+    public(friend) fun deposit_coin(
+        sender: &signer,
+        fa: Object<fungible_asset::Metadata>,
+        amount: u64
+    ) acquires FAController, Registry {
+        let registry = borrow_global<Registry>(@greenback);
+        let res_signer = account::create_signer_with_capability(&registry.signer_cap);
+
+        let fa_obj_addr = object::object_address(&fa);
+        let config = borrow_global<FAController>(fa_obj_addr);
+
+        let sender_address = signer::address_of(sender);
+
+        let sender_store = primary_fungible_store::ensure_primary_store_exists(
+            sender_address,
+            fa
+        );
+
+        let greenback_store = primary_fungible_store::ensure_primary_store_exists(
+            signer::address_of(&res_signer),
+            fa
+        );
+
+        fungible_asset::transfer(
+            sender,
+            sender_store,
+            greenback_store,
+            amount
+        );
+    }
+
+    public(friend) fun transfer_coin(
+        fa: Object<fungible_asset::Metadata>,
+        receiver: address,
+        amount: u64
+    ) acquires FAController, Registry {
+        let registry = borrow_global<Registry>(@greenback);
+        let res_signer = account::create_signer_with_capability(&registry.signer_cap);
+
+        let fa_obj_addr = object::object_address(&fa);
+        let config = borrow_global<FAController>(fa_obj_addr);
+
+        let receiver_store = primary_fungible_store::ensure_primary_store_exists(
+            receiver,
+            fa
+        );
+
+        let greenback_store = primary_fungible_store::ensure_primary_store_exists(
+            signer::address_of(&res_signer),
+            fa
+        );
+
+        fungible_asset::transfer_with_ref(
+            &config.transfer_ref,
+            greenback_store,
+            receiver_store,
+            amount
+        );
+    }
 
     public(friend) fun mint_fungible_asset(
         fa: Object<fungible_asset::Metadata>,

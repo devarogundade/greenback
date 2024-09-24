@@ -135,7 +135,7 @@ module greenback::main {
 
         let claimed_amount = mul_div_internal(amount, registry.gcoin_to_aptos, DENOMINATOR);
 
-        assets::mint_fungible_asset(
+        assets::transfer_coin(
             gcoin, 
             receiver, 
             claimed_amount
