@@ -235,7 +235,7 @@ void loop()
         Serial.print("Weight: ");
         Serial.println(weight);
 
-        sendPostRequest(rfidUID);
+        sendPostRequest(rfidUID, (int)weight);
 
         // Send post request with RFID ID
         lcd.clear();
