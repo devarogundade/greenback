@@ -36,7 +36,7 @@ const char *ssid = "MTN-2.4G-3D6751";
 const char *password = "CEAD9ABF";
 
 // Server endpoint
-const char *serverUrl = "https://greenback.render.com/dispose-to-machine-via-card";
+const char *serverUrl = "https://greenback.onrender.com/dispose-to-machine-via-card";
 
 // Variables for RFID card ID
 String rfidUID = "";
