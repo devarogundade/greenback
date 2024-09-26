@@ -12,6 +12,6 @@ export const FAUCET_AMOUNT = 100_000_000;
 export const MIN_FAUCET_AMOUNT = 1_000_000;
 export const VITE_CONTRACT_ID = import.meta.env.VITE_CONTRACT_ID;
 
-export const GCOIN_ID = '0x430e19a79440f3be880908f1ff8cdbb151d3268a83bec17cfc4d8ad921d05c6f';
-export const GNFT_ID: string = `0xe48976834ed21101531cf45daad8fdacf9dad01adec6a34397059798e2cb9819`;
-export const GCOUPON_ID: string = `0x1ff92aad5e81dbf3093a54e659416816dd50a97766a3b7ea4137e085da0b4c17`;
+export const GCOIN_ID = '0x6f400ec376445212e5382b3aab9b168ce47349b1369766963dea8b05c13538da';
+export const GNFT_ID: string = `0x248f96a8bc776d2035e9db97225948ee9600f4cc2acdc02268b5a9b2e59408b3`;
+export const GCOUPON_ID: string = `0x9c2697ef144a85d4377f3c706369df66e2e8366f476cf3ab58a3acbb7699517d`;

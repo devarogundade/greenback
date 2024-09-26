@@ -1,8 +1,10 @@
 import type { CouponProvider } from "@/types";
 
 export const daoAddresses: string[] = [
-    "0xe58a6926b1fece16f3fb274008f3557b106758c6725a6126539de39f5bc16d22",
-    "0x242e67839e34aabb7e5c92fc91239edcbb5a87b1b038c66378350d4a3be03538"
+    "0x781e4a2ab14fd509cfab6f3f2c66ccfbcdeae28bd99c35416bb0a489f0a78e46",
+    "0x3b64424aa2a2575841829fbc86cd717440ebbc4d903d1774578e1b56c9fa7fa8",
+    "0x52873040501f2730a6601a57b02842c246e88c8ed40d6592cf20ae95ee5cfd33",
+    "0x4f961cac5bdb4dd64696cd7ca45fede7d99a9dd287b07afa01120850e999e729"
 ];
 
 export const couponProviders: CouponProvider[] = [
@@ -23,7 +25,7 @@ export const couponProviders: CouponProvider[] = [
     {
         id: 3,
         name: "Pet toys",
-        description: "Harry Barker is known for its designer dog toys and accessories. But there’s more than meets the eye: ",
+        description: "Harry Barker is known for its designer dog toys and accessories.",
         image: "/images/coupons/products-harry-barker.webp",
         cost: 4532000000
     }

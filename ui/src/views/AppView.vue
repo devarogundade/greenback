@@ -10,10 +10,6 @@ import { MIN_FAUCET_AMOUNT, FAUCET_AMOUNT } from '@/scripts/constants';
 import { createUser, getUserAccount } from '@/scripts/greenback-contracts';
 import { AccountAddress, KeylessAccount } from "@aptos-labs/ts-sdk";
 import { borrowString } from '@/scripts/utils';
-import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-
-const toast = useToast({ duration: 4000, position: 'top', dismissible: true });
 
 const ephemeralKeyPair = useEphemeralKeyPair();
 const redirectUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -42,11 +38,9 @@ const getAPTAmount = async (address: AccountAddress) => {
     const txHash = await fundAccount(address, FAUCET_AMOUNT);
 
     if (txHash) {
+        // Fund user account from faucet.
         getAPTAmount(address);
-        toast.success('Faucet: your account has been funded with APT.');
-    } else {
-        toast.error('Faucet: failed to fund your account with APT.');
-    }
+    } 
 };
 
 const getUser = async (keylessAccount: KeylessAccount) => {
@@ -60,14 +54,12 @@ const getUser = async (keylessAccount: KeylessAccount) => {
         return;
     }
 
+    // Create the user account.
     const tx_hash = await createUser(keylessAccount);
 
     if (tx_hash) {
-        toast.error('Your greenback account has been created.');
         getUser(keylessAccount);
-    } else {
-        toast.error('Failed: to create your greenback account.');
-    }
+    } 
 };
 
 watch(useKeylessAccounts().accounts, async () => {

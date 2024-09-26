@@ -61,7 +61,7 @@ export class AppService {
           });
         } else {
           metric.push({
-            value: 0,  // Padding with zero
+            value: 0.01,  // Padding with zero
             date: currentDate,   // The date we're padding for
           });
         }

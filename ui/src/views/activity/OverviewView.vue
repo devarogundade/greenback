@@ -59,7 +59,7 @@ watch(
         <div class="count_wrapper">
             <img src="https://img.freepik.com/free-vector/3d-green-gradient-recycle-sign_78370-826.jpg?t=st=1722726322~exp=1722729922~hmac=577afa87216937fd5967af00d672d283ecccdbd828b74cc179deaa2575108425&w=826"
                 alt="">
-            <h3>You have recycled <br> <span>{{ (data?.[data.length - 1]?.pl / 100) || 0 }} plastic</span> bottles
+            <h3>You have recycled <br> <span>{{ Number(data?.[data.length - 1]?.pl / 100).toFixed(0) || 0 }} plastic</span> bottles
                 today!.</h3>
         </div>
 

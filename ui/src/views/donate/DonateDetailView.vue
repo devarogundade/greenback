@@ -63,6 +63,14 @@ const vote = async (proposalId: number, voteOption: boolean) => {
 
     if (txHash) {
         toast.success('Vote casted.');
+
+        if (dao.value) {
+            const proposalIds = Array.from({
+                length: dao.value.nextProposalId
+            }, (_, i) => i + 1);
+
+            getProposals(proposalIds);
+        }
     } else {
         toast.success('Failed to cast vote.');
     }
@@ -71,7 +79,7 @@ const vote = async (proposalId: number, voteOption: boolean) => {
 };
 
 const getRatio = (a: number, b: number) => {
-    return Number(a / b).toFixed(0);
+    return Number(a / (Number(a) + Number(b))) * 100;
 };
 
 onMounted(() => {
@@ -144,15 +152,14 @@ onMounted(() => {
                     </div>
 
                     <div class="progress_info">
-                        <p>Yes, agreed. ~ {{ getRatio(proposal.finalYesVotes, (proposal.finalYesVotes +
-                            proposal.finalNoVotes)) }}%</p>
-                        <p>No, disagreed. ~ {{ getRatio(proposal.finalNoVotes, (proposal.finalYesVotes +
-                            proposal.finalNoVotes)) }}%</p>
+                        <p>Yes, agreed. ~ {{ getRatio(proposal.finalYesVotes, proposal.finalNoVotes) }}%</p>
+                        <p>No, disagreed. ~ {{ getRatio(proposal.finalNoVotes, proposal.finalYesVotes) }}%</p>
                     </div>
-
                     <div class="progress_bar">
-                        <div class="yes_bar"></div>
-                        <div class="no_bar"></div>
+                        <div class="yes_bar"
+                            :style="`width: ${getRatio(proposal.finalYesVotes, proposal.finalNoVotes)}%`"></div>
+                        <div class="no_bar"
+                            :style="`width: ${getRatio(proposal.finalNoVotes, proposal.finalYesVotes)}%`"></div>
                     </div>
 
                     <div class="proposer">
@@ -375,6 +382,18 @@ onMounted(() => {
     border-radius: 6px;
     background: var(--bg-dark);
     border: 1px solid var(--bg-darkest);
+}
+
+.yes_bar {
+    height: 100%;
+    border-radius: 6px;
+    background: var(--primary-dark);
+}
+
+.no_bar {
+    height: 100%;
+    border-radius: 6px;
+    background: var(--bg-dark);
 }
 
 .proposer {
