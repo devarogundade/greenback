@@ -5,6 +5,7 @@
 #include <ESP8266HTTPClient.h>
 #include <Servo.h>
 #include <Wire.h>
+#include <HX711.h>
 
 #define RST_PIN D3 // Configurable, see typical pin layout above
 #define SS_PIN D4  // Configurable, see typical pin layout above
@@ -14,6 +15,9 @@
 #define GREEN_LED_PIN D0
 #define GREEN_RED_PIN D9
 
+#define DT_PIN D5  // HX711 DT pin
+#define SCK_PIN D7 // HX711 SCK pin
+
 // ESP32 CAM pin for object recognition
 #define OBJECT_DETECT_PIN D6
 
@@ -21,6 +25,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // LCD setup (16x2 display, I2C address 0x27)
 LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+HX711 scale; // Create HX711 instance
 
 // Servo setup
 Servo servoMotor;
@@ -30,7 +36,7 @@ const char *ssid = "MTN-2.4G-3D6751";
 const char *password = "CEAD9ABF";
 
 // Server endpoint
-const String serverUrl = "https://greenback.onrender.com/dispose-to-machine-via-card";
+const char *serverUrl = "https://greenback.render.com/dispose-to-machine-via-card";
 
 // Variables for RFID card ID
 String rfidUID = "";
@@ -138,6 +144,11 @@ void setup()
 
     servoMotor.attach(SERVO_PIN);
     servoMotor.write(0); // Servo at 0 degrees
+
+    // Initialize HX711
+    scale.begin(DT_PIN, SCK_PIN);
+    scale.set_scale(); // You should set the scale according to your load cell calibration
+    scale.tare();      // Reset the scale to 0
 }
 
 void loop()
@@ -218,6 +229,11 @@ void loop()
         lcd.print("Please wait...");
 
         delay(1000);
+
+        // Read weight
+        float weight = scale.get_units(5) * 1000; // Convert to grams
+        Serial.print("Weight: ");
+        Serial.println(weight);
 
         sendPostRequest(rfidUID);
 
