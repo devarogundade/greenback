@@ -68,7 +68,9 @@ onMounted(() => {
             <div class="machine" id="recycling-machine">
               <div class="machine_image">
                 <img src="/images/vending_machine.png" alt="">
-                <PlayCircleIcon />
+                <a href="https://youtu.be/X2AyC6xTSlQ" target="_blank">
+                  <PlayCircleIcon />
+                </a>
               </div>
               <div class="machine_name">
                 <p>The Recycling Machine</p>
