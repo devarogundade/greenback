@@ -67,6 +67,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'GreenbackServer'
+          app-name: 'Greenback'
           slot-name: 'Production'
           package: .
