@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - Greenback
+name: Build and deploy Node.js server to Azure Web App - Greenback Server
 
 on:
   push:
@@ -21,20 +21,22 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: npm install, build, and test
+      - name: Navigate to server directory
+        working-directory: ./server
         run: |
           npm install
           npm run build --if-present
           npm run test --if-present
 
-      - name: Zip artifact for deployment
+      - name: Zip server artifact for deployment
+        working-directory: ./server
         run: zip release.zip ./* -r
 
-      - name: Upload artifact for deployment job
+      - name: Upload server artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: release.zip
+          name: server-app
+          path: ./server/release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,12 +48,12 @@ jobs:
       id-token: write #This is required for requesting the JWT
 
     steps:
-      - name: Download artifact from build job
+      - name: Download server artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: server-app
 
-      - name: Unzip artifact for deployment
+      - name: Unzip server artifact for deployment
         run: unzip release.zip
       
       - name: Login to Azure
@@ -61,11 +63,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E670CDC6AB9E4910B50ED3E523E15CAD }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F9A906B98D5B46FA9CC22A289A9372C9 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: 'Deploy to Azure Web App - Server'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'Greenback'
+          app-name: 'GreenbackServer'
           slot-name: 'Production'
           package: .
-          
