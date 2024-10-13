@@ -4,7 +4,7 @@ import axios from 'axios';
 import { GCOUPON_ID, GNFT_ID } from "./constants";
 
 const client = axios.create({
-    baseURL: `https://aptos-testnet.nodit.io/${import.meta.env.VITE_NODIT_KEY}/v1/graphql`,
+    baseURL: import.meta.env.VITE_NODIT_URL_KEY
 });
 
 export async function getUserGNFTs(
