@@ -22,4 +22,23 @@ The machine is connected to the GreenBack server, which will credit users with $
 
 [Less technical details](https://dorahacks.io/buidl/14559/)
 
-## TECHNICAL
+## TECHNICAL COMPONENTS
+
+#### Reverse Vending Machine 
+
+Hardware for collecting and processing recyclable plastic bottles.
+
+![rvm-2.png](https://cdn.dorahacks.io/static/files/191f4e9c0359167eefcc4ac48948c3f9.png)
+
+#### Smart Contracts
+
+Blockchain-based contracts that manage $GCoin distribution, DAO voting, and fund allocation.
+
+[deployed contract](https://explorer.aptoslabs.com/object/0xda3b1109be114106701a7a8efbf5e91ea8f18827f86585035c04bfc49d9b38dd?network=testnet)
+
+#### Web Server & Application
+
+User interface for managing $GCoin, participating in DAO voting, and accessing rewards.
+
+[web server endpoint](https://greenback-f7gahzfrbybffxf0.canadacentral-01.azurewebsites.net/) |
+[web app endpoint](https://thegreenback.xyz)
